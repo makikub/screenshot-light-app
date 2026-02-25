@@ -20,28 +20,30 @@ macOS メニューバー常駐のスクリーンショット注釈アプリ。�
 ## Requirements
 
 - macOS 14.0+
-- Swift 5.9+ / Swift 6 compiler
-- Xcode Command Line Tools（`swift build` に必要）
+- Xcode 16+（推奨）または Swift 5.9+ Command Line Tools
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen)（`project.yml` から `.xcodeproj` を生成）
 
 ## Build & Run
 
+### Xcode（推奨）
+
 ```bash
-# .app バンドルをビルドして起動
+xcodegen generate              # .xcodeproj を生成
+open ScreenshotApp.xcodeproj   # Xcode で開いて Cmd+R で実行
+```
+
+コマンドラインからビルド・起動する場合:
+
+```bash
+xcodebuild -project ScreenshotApp.xcodeproj -scheme ScreenshotApp -configuration Debug build
+open ~/Library/Developer/Xcode/DerivedData/ScreenshotApp-*/Build/Products/Debug/ScreenshotApp.app
+```
+
+### Xcode なしの場合
+
+```bash
 bash scripts/bundle.sh
 open .build/release/ScreenshotApp.app
-```
-
-開発時のデバッグビルド:
-
-```bash
-swift build
-```
-
-Xcode プロジェクトを生成する場合（要 [xcodegen](https://github.com/yonaskolb/XcodeGen)):
-
-```bash
-xcodegen generate
-open ScreenshotApp.xcodeproj
 ```
 
 ## Architecture

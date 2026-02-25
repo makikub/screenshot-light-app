@@ -5,14 +5,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build Commands
 
 ```bash
-swift build                    # デバッグビルド
-swift build -c release         # リリースビルド
-bash scripts/bundle.sh         # .app バンドル作成 (.build/release/ScreenshotApp.app)
-open .build/release/ScreenshotApp.app  # アプリ起動
-xcodegen generate              # .xcodeproj 再生成（project.yml から）
+# ビルド & 実行（推奨）
+xcodebuild -project ScreenshotApp.xcodeproj -scheme ScreenshotApp -configuration Debug build
+open ~/Library/Developer/Xcode/DerivedData/ScreenshotApp-*/Build/Products/Debug/ScreenshotApp.app
+
+# Xcode プロジェクト再生成（project.yml 変更時）
+xcodegen generate
+
+# SPM 単体ビルド（Xcode なしでも可）
+swift build
+bash scripts/bundle.sh         # .app バンドル作成（コード署名なし）
 ```
 
-Xcode.app は未インストール。`xcodebuild` は使用不可。`swift build` + `scripts/bundle.sh` でビルド・バンドルする。
+`xcodebuild` を優先する。コード署名・Info.plist・Entitlements が自動処理される。
 
 ## Architecture
 
