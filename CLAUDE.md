@@ -19,6 +19,21 @@ bash scripts/bundle.sh         # .app バンドル作成（コード署名なし
 
 `xcodebuild` を優先する。コード署名・Info.plist・Entitlements が自動処理される。
 
+### 動作確認（プロセス停止 → 権限リセット → 再起動）
+
+```bash
+# 1. 実行中プロセスを停止
+pkill -f ScreenshotApp
+
+# 2. 画面収録の権限をリセット（再起動時に許可ダイアログが再表示される）
+tccutil reset ScreenCapture com.example.screenshotapp
+
+# 3. アプリを再起動
+open ~/Library/Developer/Xcode/DerivedData/ScreenshotApp-*/Build/Products/Debug/ScreenshotApp.app
+```
+
+権限リセットは TCC データベースから許可を削除するため、起動時に画面収録の許可ダイアログが出る。権限まわりの動作確認が不要なら手順 2 は省略可。
+
 ## Architecture
 
 macOS メニューバー常駐のスクリーンショット注釈アプリ。SwiftUI + AppKit ハイブリッド構成。

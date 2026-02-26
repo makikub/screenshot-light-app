@@ -52,7 +52,7 @@ enum ExportManager {
 
     // MARK: - Save to file
 
-    static func saveToFile(image: NSImage, annotations: [Annotation], canvasSize: CGSize) {
+    static func saveToFile(image: NSImage, annotations: [Annotation], canvasSize: CGSize, parentWindow: NSWindow? = nil) {
         let output: NSImage
         if annotations.isEmpty {
             output = image
@@ -75,9 +75,16 @@ enum ExportManager {
         formatter.dateFormat = "yyyyMMdd_HHmmss"
         panel.nameFieldStringValue = "screenshot_\(formatter.string(from: Date())).png"
 
-        panel.begin { response in
-            guard response == .OK, let url = panel.url else { return }
-            try? pngData.write(to: url)
+        if let parentWindow {
+            panel.beginSheetModal(for: parentWindow) { response in
+                guard response == .OK, let url = panel.url else { return }
+                try? pngData.write(to: url)
+            }
+        } else {
+            panel.begin { response in
+                guard response == .OK, let url = panel.url else { return }
+                try? pngData.write(to: url)
+            }
         }
     }
 }

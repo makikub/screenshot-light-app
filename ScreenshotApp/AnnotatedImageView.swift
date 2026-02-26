@@ -183,7 +183,8 @@ struct AnnotatedImageView: View {
         ExportManager.saveToFile(
             image: image,
             annotations: viewModel.annotations,
-            canvasSize: canvasSize
+            canvasSize: canvasSize,
+            parentWindow: NSApp.keyWindow
         )
     }
 }
