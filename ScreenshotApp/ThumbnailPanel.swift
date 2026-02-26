@@ -53,32 +53,29 @@ final class ThumbnailPanel: NSPanel {
 
     private func positionAtBottomLeft() {
         guard let screen = NSScreen.main else { return }
-        let visibleFrame = screen.visibleFrame
-        let margin: CGFloat = 48
+        // X: visibleFrame を使い左 Dock を避ける
+        // Y: screen.frame ベースで Dock の表示/非表示に左右されない固定位置
+        let xMargin: CGFloat = 48
+        let yOffset: CGFloat = 96 // Dock（最大約80pt）を常に超える固定オフセット
         setFrameOrigin(NSPoint(
-            x: visibleFrame.origin.x + margin,
-            y: visibleFrame.origin.y + margin
+            x: screen.visibleFrame.origin.x + xMargin,
+            y: screen.frame.origin.y + yOffset
         ))
     }
 
     private func animateIn() {
-        let finalOrigin = frame.origin
-        setFrameOrigin(NSPoint(x: finalOrigin.x, y: finalOrigin.y - frame.height))
-
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.3
+            context.duration = 0.25
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            animator().setFrameOrigin(finalOrigin)
             animator().alphaValue = 1
         }
     }
 
     private func animateDismiss() {
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.3
+            context.duration = 0.25
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             animator().alphaValue = 0
-            animator().setFrameOrigin(NSPoint(x: frame.origin.x, y: frame.origin.y - frame.height))
         }, completionHandler: { [weak self] in
             self?.onDismissed?()
             self?.close()
