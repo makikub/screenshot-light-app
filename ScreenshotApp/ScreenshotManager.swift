@@ -2,9 +2,14 @@ import AppKit
 
 final class ScreenshotManager: ObservableObject {
     private var windowController: ImageWindowController?
+    private var thumbnailPanel: ThumbnailPanel?
 
     /// `screencapture -i -c` を実行し、撮影後にクリップボードから画像を取得して表示する
     func captureScreenshot() {
+        // 既存のサムネイルを即座に閉じる
+        thumbnailPanel?.orderOut(nil)
+        thumbnailPanel = nil
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         process.arguments = ["-i", "-c"]
@@ -28,9 +33,22 @@ final class ScreenshotManager: ObservableObject {
             return
         }
 
+        let panel = ThumbnailPanel(
+            image: image,
+            onOpen: { [weak self] in
+                self?.thumbnailPanel = nil
+                self?.openEditor(with: image)
+            },
+            onDismiss: { [weak self] in
+                self?.thumbnailPanel = nil
+            }
+        )
+        thumbnailPanel = panel
+    }
+
+    private func openEditor(with image: NSImage) {
         let controller = ImageWindowController(image: image)
         controller.showWindow(nil)
-        // ウィンドウを最前面にしてフォーカスする
         controller.window?.orderFrontRegardless()
         NSApp.activate(ignoringOtherApps: true)
         windowController = controller
