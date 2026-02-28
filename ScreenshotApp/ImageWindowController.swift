@@ -15,7 +15,7 @@ final class ImageWindowController: NSWindowController, NSWindowDelegate {
             defer: false
         )
 
-        window.level = .floating
+        window.level = .normal
         window.title = "Screenshot"
         window.isReleasedWhenClosed = false
         window.contentMinSize = NSSize(width: 400, height: 300)
