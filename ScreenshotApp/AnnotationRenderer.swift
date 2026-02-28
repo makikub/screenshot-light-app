@@ -27,33 +27,57 @@ enum AnnotationRenderer {
     // MARK: - Arrow
 
     private static func drawArrow(_ a: ArrowAnnotation, in context: inout GraphicsContext) {
-        // Shaft
-        var line = Path()
-        line.move(to: a.start)
-        line.addLine(to: a.end)
-        context.stroke(line, with: .color(a.color),
-                       style: StrokeStyle(lineWidth: a.lineWidth, lineCap: .round))
+        let dx = a.end.x - a.start.x
+        let dy = a.end.y - a.start.y
+        let length = hypot(dx, dy)
+        guard length > 1 else { return }
 
-        // Arrowhead
-        let angle = atan2(a.end.y - a.start.y, a.end.x - a.start.x)
-        let headLength: CGFloat = max(12, a.lineWidth * 4)
-        let headAngle: CGFloat = .pi / 6
+        // 単位ベクトル（方向 & 法線）
+        let ux = dx / length
+        let uy = dy / length
+        let nx = -uy
+        let ny = ux
 
-        let p1 = CGPoint(
-            x: a.end.x - headLength * cos(angle - headAngle),
-            y: a.end.y - headLength * sin(angle - headAngle)
-        )
-        let p2 = CGPoint(
-            x: a.end.x - headLength * cos(angle + headAngle),
-            y: a.end.y - headLength * sin(angle + headAngle)
-        )
+        // テーパーパラメータ（lineWidth 基準）
+        let tailWidth = a.lineWidth * 0.6
+        let bodyEndWidth = a.lineWidth * 2.5
+        let headLength = min(max(16, a.lineWidth * 6), length)
+        let headWidth = max(20, a.lineWidth * 8)
 
-        var head = Path()
-        head.move(to: a.end)
-        head.addLine(to: p1)
-        head.addLine(to: p2)
-        head.closeSubpath()
-        context.fill(head, with: .color(a.color))
+        // 矢じり付け根の位置（end から headLength 分手前）
+        let jx = a.end.x - ux * headLength
+        let jy = a.end.y - uy * headLength
+
+        // 始点側の2点（細い）
+        let p1 = CGPoint(x: a.start.x + nx * tailWidth / 2,
+                         y: a.start.y + ny * tailWidth / 2)
+        let p2 = CGPoint(x: a.start.x - nx * tailWidth / 2,
+                         y: a.start.y - ny * tailWidth / 2)
+
+        // 矢じり付け根のボディ側2点（太い）
+        let p3 = CGPoint(x: jx + nx * bodyEndWidth / 2,
+                         y: jy + ny * bodyEndWidth / 2)
+        let p4 = CGPoint(x: jx - nx * bodyEndWidth / 2,
+                         y: jy - ny * bodyEndWidth / 2)
+
+        // 矢じり翼の2点
+        let p5 = CGPoint(x: jx + nx * headWidth / 2,
+                         y: jy + ny * headWidth / 2)
+        let p6 = CGPoint(x: jx - nx * headWidth / 2,
+                         y: jy - ny * headWidth / 2)
+
+        // ボディ + 矢じりを1つの連続パスで描画
+        var path = Path()
+        path.move(to: p1)
+        path.addLine(to: p3)
+        path.addLine(to: p5)
+        path.addLine(to: a.end)
+        path.addLine(to: p6)
+        path.addLine(to: p4)
+        path.addLine(to: p2)
+        path.closeSubpath()
+
+        context.fill(path, with: .color(a.color))
     }
 
     // MARK: - Rectangle
