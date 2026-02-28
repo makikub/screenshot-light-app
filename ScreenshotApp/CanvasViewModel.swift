@@ -13,11 +13,34 @@ final class CanvasViewModel: ObservableObject {
     @Published var editingTextPosition: CGPoint = .zero
     @Published var editingText: String = ""
 
+    // Move state
+    @Published var movingAnnotationIndex: Int? = nil
+    var originalAnnotation: Annotation?
+    var dragStartPoint: CGPoint = .zero
+
+    // Undo history
+    var history: [[Annotation]] = []
+
+    var isDragActive: Bool {
+        currentAnnotation != nil || movingAnnotationIndex != nil
+    }
+
+    private func pushHistory() {
+        history.append(annotations)
+    }
+
     // MARK: - Drag handling
 
     func handleDragStart(at point: CGPoint) {
         guard currentTool != .text else { return }
         switch currentTool {
+        case .move:
+            if let index = AnnotationRenderer.hitTest(point: point, in: annotations) {
+                pushHistory()
+                movingAnnotationIndex = index
+                originalAnnotation = annotations[index]
+                dragStartPoint = point
+            }
         case .arrow:
             currentAnnotation = .arrow(ArrowAnnotation(
                 start: point, end: point,
@@ -43,6 +66,13 @@ final class CanvasViewModel: ObservableObject {
     }
 
     func handleDragChanged(to point: CGPoint) {
+        if currentTool == .move {
+            guard let index = movingAnnotationIndex, let original = originalAnnotation else { return }
+            let offset = CGSize(width: point.x - dragStartPoint.x, height: point.y - dragStartPoint.y)
+            annotations[index] = original.translated(by: offset)
+            return
+        }
+
         switch currentAnnotation {
         case .arrow(var a):
             a.end = point
@@ -62,8 +92,17 @@ final class CanvasViewModel: ObservableObject {
     }
 
     func handleDragEnd(at point: CGPoint) {
+        if currentTool == .move {
+            // 移動の最終位置を適用してクリア
+            handleDragChanged(to: point)
+            movingAnnotationIndex = nil
+            originalAnnotation = nil
+            return
+        }
+
         handleDragChanged(to: point)
         if let annotation = currentAnnotation {
+            pushHistory()
             annotations.append(annotation)
             currentAnnotation = nil
         }
@@ -81,6 +120,7 @@ final class CanvasViewModel: ObservableObject {
 
     func commitText() {
         if !editingText.isEmpty {
+            pushHistory()
             annotations.append(.text(TextAnnotation(
                 position: editingTextPosition,
                 text: editingText,
@@ -95,13 +135,20 @@ final class CanvasViewModel: ObservableObject {
     // MARK: - Edit operations
 
     func undo() {
-        guard !annotations.isEmpty else { return }
-        annotations.removeLast()
+        guard let previous = history.popLast() else { return }
+        annotations = previous
+        currentAnnotation = nil
+        movingAnnotationIndex = nil
+        originalAnnotation = nil
     }
 
     func clear() {
+        guard !annotations.isEmpty else { return }
+        pushHistory()
         annotations.removeAll()
         currentAnnotation = nil
+        movingAnnotationIndex = nil
+        originalAnnotation = nil
         isEditingText = false
         editingText = ""
     }

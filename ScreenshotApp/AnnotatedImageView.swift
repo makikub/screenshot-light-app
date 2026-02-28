@@ -41,7 +41,7 @@ struct AnnotatedImageView: View {
             Button { viewModel.undo() } label: {
                 Image(systemName: "arrow.uturn.backward")
             }
-            .disabled(viewModel.annotations.isEmpty)
+            .disabled(viewModel.history.isEmpty)
             .help("取り消し")
             .keyboardShortcut("z", modifiers: .command)
 
@@ -87,7 +87,8 @@ struct AnnotatedImageView: View {
                     }
                     AnnotationRenderer.draw(
                         allAnnotations, in: &context,
-                        size: size, pixelatedImage: pixelatedImage
+                        size: size, pixelatedImage: pixelatedImage,
+                        selectedAnnotationId: viewModel.movingAnnotationIndex.map { viewModel.annotations[$0].id }
                     )
                 }
 
@@ -128,12 +129,11 @@ struct AnnotatedImageView: View {
     private var canvasGesture: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
-                if viewModel.currentAnnotation == nil && viewModel.currentTool != .text {
+                if viewModel.currentTool == .text { return }
+                if !viewModel.isDragActive {
                     viewModel.handleDragStart(at: value.startLocation)
                 }
-                if viewModel.currentTool != .text {
-                    viewModel.handleDragChanged(to: value.location)
-                }
+                viewModel.handleDragChanged(to: value.location)
             }
             .onEnded { value in
                 let distance = hypot(
