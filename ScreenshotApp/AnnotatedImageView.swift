@@ -108,6 +108,17 @@ struct AnnotatedImageView: View {
                 canvasSize = displaySize
                 pixelatedImage = ImagePixelator.pixelate(image)
             }
+            .onKeyPress(characters: .init(charactersIn: "123456")) { press in
+                guard !viewModel.isEditingText else { return .ignored }
+                let tools = AnnotationTool.allCases
+                if let index = Int(String(press.characters.first ?? "0")),
+                   index >= 1, index <= tools.count {
+                    if viewModel.isEditingText { viewModel.commitText() }
+                    viewModel.currentTool = tools[index - 1]
+                    return .handled
+                }
+                return .ignored
+            }
         }
     }
 

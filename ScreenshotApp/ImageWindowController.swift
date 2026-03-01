@@ -30,7 +30,10 @@ final class ImageWindowController: NSWindowController, NSWindowDelegate {
 
     /// 画像サイズを画面の90%以内に収まるよう計算する
     private static func calcImageSize(for image: NSImage) -> NSSize {
-        let screen = NSScreen.main ?? NSScreen.screens[0]
+        guard let screen = NSScreen.main ?? NSScreen.screens.first else {
+            // ディスプレイ未検出時のフォールバック
+            return NSSize(width: 1280, height: 800)
+        }
         let visibleFrame = screen.visibleFrame
         let maxWidth = visibleFrame.width * 0.9
         let maxHeight = visibleFrame.height * 0.85 // ツールバー分を考慮

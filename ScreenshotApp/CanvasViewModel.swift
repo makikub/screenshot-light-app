@@ -4,9 +4,15 @@ final class CanvasViewModel: ObservableObject {
     @Published var currentTool: AnnotationTool = .arrow
     @Published var annotations: [Annotation] = []
     @Published var currentAnnotation: Annotation?
-    @Published var strokeColor: Color = .red
-    @Published var lineWidth: CGFloat = 3
-    @Published var fontSize: CGFloat = 20
+    @Published var strokeColor: Color = .red {
+        didSet { Self.saveColor(strokeColor) }
+    }
+    @Published var lineWidth: CGFloat = 3 {
+        didSet { UserDefaults.standard.set(Double(lineWidth), forKey: "lineWidth") }
+    }
+    @Published var fontSize: CGFloat = 20 {
+        didSet { UserDefaults.standard.set(Double(fontSize), forKey: "fontSize") }
+    }
 
     // Text editing state
     @Published var isEditingText = false
@@ -20,6 +26,39 @@ final class CanvasViewModel: ObservableObject {
 
     // Undo history
     var history: [[Annotation]] = []
+
+    init() {
+        let defaults = UserDefaults.standard
+        if let color = Self.loadColor() {
+            strokeColor = color
+        }
+        if defaults.object(forKey: "lineWidth") != nil {
+            lineWidth = CGFloat(defaults.double(forKey: "lineWidth"))
+        }
+        if defaults.object(forKey: "fontSize") != nil {
+            fontSize = CGFloat(defaults.double(forKey: "fontSize"))
+        }
+    }
+
+    // MARK: - Color persistence
+
+    private static func saveColor(_ color: Color) {
+        let nsColor = NSColor(color).usingColorSpace(.sRGB) ?? NSColor(color)
+        UserDefaults.standard.set(Double(nsColor.redComponent), forKey: "strokeColorR")
+        UserDefaults.standard.set(Double(nsColor.greenComponent), forKey: "strokeColorG")
+        UserDefaults.standard.set(Double(nsColor.blueComponent), forKey: "strokeColorB")
+        UserDefaults.standard.set(Double(nsColor.alphaComponent), forKey: "strokeColorA")
+    }
+
+    private static func loadColor() -> Color? {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: "strokeColorR") != nil else { return nil }
+        let r = defaults.double(forKey: "strokeColorR")
+        let g = defaults.double(forKey: "strokeColorG")
+        let b = defaults.double(forKey: "strokeColorB")
+        let a = defaults.double(forKey: "strokeColorA")
+        return Color(red: r, green: g, blue: b, opacity: a)
+    }
 
     var isDragActive: Bool {
         currentAnnotation != nil || movingAnnotationIndex != nil

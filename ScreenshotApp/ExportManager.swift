@@ -41,8 +41,10 @@ enum ExportManager {
         if annotations.isEmpty {
             output = image
         } else {
-            guard let rendered = render(image: image, annotations: annotations, canvasSize: canvasSize)
-            else { return }
+            guard let rendered = render(image: image, annotations: annotations, canvasSize: canvasSize) else {
+                showError("画像のレンダリングに失敗しました")
+                return
+            }
             output = rendered
         }
 
@@ -57,15 +59,20 @@ enum ExportManager {
         if annotations.isEmpty {
             output = image
         } else {
-            guard let rendered = render(image: image, annotations: annotations, canvasSize: canvasSize)
-            else { return }
+            guard let rendered = render(image: image, annotations: annotations, canvasSize: canvasSize) else {
+                showError("画像のレンダリングに失敗しました")
+                return
+            }
             output = rendered
         }
 
         guard let tiffData = output.tiffRepresentation,
               let bitmapRep = NSBitmapImageRep(data: tiffData),
               let pngData = bitmapRep.representation(using: .png, properties: [:])
-        else { return }
+        else {
+            showError("画像の変換に失敗しました")
+            return
+        }
 
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.png]
@@ -75,17 +82,36 @@ enum ExportManager {
         formatter.dateFormat = "yyyyMMdd_HHmmss"
         panel.nameFieldStringValue = "screenshot_\(formatter.string(from: Date())).png"
 
+        let writeFile = { (url: URL) in
+            do {
+                try pngData.write(to: url)
+            } catch {
+                showError("ファイルの保存に失敗しました: \(error.localizedDescription)")
+            }
+        }
+
         if let parentWindow {
             panel.beginSheetModal(for: parentWindow) { response in
                 guard response == .OK, let url = panel.url else { return }
-                try? pngData.write(to: url)
+                writeFile(url)
             }
         } else {
             panel.begin { response in
                 guard response == .OK, let url = panel.url else { return }
-                try? pngData.write(to: url)
+                writeFile(url)
             }
         }
+    }
+
+    // MARK: - Error handling
+
+    private static func showError(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = "エラー"
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 }
 
