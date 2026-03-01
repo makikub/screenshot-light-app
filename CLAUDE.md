@@ -32,7 +32,7 @@ tccutil reset ScreenCapture com.example.screenshotapp
 open ~/Library/Developer/Xcode/DerivedData/ScreenshotApp-*/Build/Products/Debug/ScreenshotApp.app
 ```
 
-権限リセットは TCC データベースから許可を削除するため、起動時に画面収録の許可ダイアログが出る。権限まわりの動作確認が不要なら手順 2 は省略可。
+実装完了後は必ず上記 3 ステップすべてを実行すること。権限リセット（手順 2）により TCC データベースから許可が削除され、起動時に画面収録の許可ダイアログが再表示される。
 
 ## Architecture
 
