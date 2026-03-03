@@ -12,7 +12,7 @@ struct OnboardingView: View {
             Spacer()
             footerSection
         }
-        .frame(width: 480, height: 340)
+        .frame(width: 480, height: 360)
         .onAppear { permission.startPolling() }
         .onDisappear { permission.stopPolling() }
     }
@@ -40,40 +40,48 @@ struct OnboardingView: View {
     // MARK: - Permission row
 
     private var permissionSection: some View {
-        HStack(spacing: 12) {
-            Image(systemName: permission.isGranted
-                  ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .font(.title2)
-                .foregroundStyle(permission.isGranted ? .green : .red)
-                .contentTransition(.symbolEffect(.replace))
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                Image(systemName: permission.isGranted
+                      ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(permission.isGranted ? .green : .red)
+                    .contentTransition(.symbolEffect(.replace))
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("画面収録")
-                    .font(.headline)
-                Text("画面の内容をキャプチャするために必要です")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("画面収録")
+                        .font(.headline)
+                    Text("画面の内容をキャプチャするために必要です")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if permission.isGranted {
+                    Text("許可済み")
+                        .font(.callout)
+                        .foregroundStyle(.green)
+                } else {
+                    Button("設定を開く") {
+                        permission.request()
+                    }
+                    .controlSize(.small)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.controlBackgroundColor))
+            )
+
+            if !permission.isGranted {
+                Text("一覧にアプリがない場合は「+」ボタンから追加してください")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-
-            Spacer()
-
-            if permission.isGranted {
-                Text("許可済み")
-                    .font(.callout)
-                    .foregroundStyle(.green)
-            } else {
-                Button("設定を開く") {
-                    permission.request()
-                }
-                .controlSize(.small)
-            }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(.controlBackgroundColor))
-        )
         .padding(.horizontal, 32)
     }
 
