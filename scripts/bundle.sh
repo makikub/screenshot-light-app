@@ -33,7 +33,7 @@ cat > "$CONTENTS/Info.plist" << 'PLIST'
     <key>CFBundleExecutable</key>
     <string>ScreenshotApp</string>
     <key>CFBundleIdentifier</key>
-    <string>com.example.screenshotapp</string>
+    <string>com.masakikubota.screenshot</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>

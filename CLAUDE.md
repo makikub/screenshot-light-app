@@ -15,6 +15,10 @@ xcodegen generate
 # SPM 単体ビルド（Xcode なしでも可）
 swift build
 bash scripts/bundle.sh         # .app バンドル作成（コード署名なし）
+
+# リリースビルド（DMG + 公証）
+# 事前に notarytool のキーチェーンプロファイルを登録しておくこと
+bash scripts/release.sh
 ```
 
 `xcodebuild` を優先する。コード署名・Info.plist・Entitlements が自動処理される。
@@ -26,7 +30,7 @@ bash scripts/bundle.sh         # .app バンドル作成（コード署名なし
 pkill -f ScreenshotApp
 
 # 2. 画面収録の権限をリセット（再起動時に許可ダイアログが再表示される）
-tccutil reset ScreenCapture com.example.screenshotapp
+tccutil reset ScreenCapture com.masakikubota.screenshot
 
 # 3. アプリを再起動
 open ~/Library/Developer/Xcode/DerivedData/ScreenshotApp-*/Build/Products/Debug/ScreenshotApp.app

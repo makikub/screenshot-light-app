@@ -1,7 +1,7 @@
 name: ScreenshotApp
 
 options:
-  bundleIdPrefix: com.example
+  bundleIdPrefix: com.masakikubota
   deploymentTarget:
     macOS: "14.0"
   xcodeVersion: "16.0"
@@ -9,6 +9,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: L98U958G2N
 
 targets:
   ScreenshotApp:
@@ -18,15 +19,26 @@ targets:
       - path: ScreenshotApp
         excludes:
           - "*.plist"
+          - "*.entitlements"
     info:
       path: ScreenshotApp/Info.plist
       properties:
         LSUIElement: true
         CFBundleDisplayName: Screenshot
         NSScreenCaptureUsageDescription: "スクリーンショットを撮影するためにアクセスが必要です"
+    entitlements:
+      path: ScreenshotApp/ScreenshotApp.entitlements
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.screenshotapp
+        PRODUCT_BUNDLE_IDENTIFIER: com.masakikubota.screenshot
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         ENABLE_APP_SANDBOX: NO
+        ENABLE_HARDENED_RUNTIME: YES
         PRODUCT_NAME: ScreenshotApp
+      configs:
+        Debug:
+          CODE_SIGN_IDENTITY: "-"
+          CODE_SIGN_STYLE: Automatic
+        Release:
+          CODE_SIGN_IDENTITY: Developer ID Application
+          CODE_SIGN_STYLE: Manual
