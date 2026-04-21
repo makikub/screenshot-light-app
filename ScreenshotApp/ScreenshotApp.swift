@@ -1,8 +1,22 @@
 import SwiftUI
+@preconcurrency import Sparkle
 
 @main
 struct ScreenshotApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
+    private let updaterController: SPUStandardUpdaterController
+    @ObservedObject private var updaterViewModel: UpdaterViewModel
+
+    init() {
+        let controller = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+        self.updaterController = controller
+        self.updaterViewModel = UpdaterViewModel(updater: controller.updater)
+    }
 
     var body: some Scene {
         MenuBarExtra("Screenshot", systemImage: "camera") {
@@ -10,6 +24,13 @@ struct ScreenshotApp: App {
                 appDelegate.captureOrShowOnboarding()
             }
             .keyboardShortcut("s", modifiers: [.command, .shift])
+
+            Divider()
+
+            Button("アップデートを確認...") {
+                updaterViewModel.checkForUpdates()
+            }
+            .disabled(!updaterViewModel.canCheckForUpdates)
 
             Divider()
 

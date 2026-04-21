@@ -24,5 +24,13 @@
 	<true/>
 	<key>NSScreenCaptureUsageDescription</key>
 	<string>スクリーンショットを撮影するためにアクセスが必要です</string>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/makikub/screenshot-light-app/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>HprDdsNj+cvgNTaqa1hMbEBx3HDs0z7w1P9F5XyKxtE=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>

@@ -6,6 +6,11 @@ options:
     macOS: "14.0"
   xcodeVersion: "16.0"
 
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
+
 settings:
   base:
     SWIFT_VERSION: "5.9"
@@ -26,8 +31,14 @@ targets:
         LSUIElement: true
         CFBundleDisplayName: Screenshot
         NSScreenCaptureUsageDescription: "スクリーンショットを撮影するためにアクセスが必要です"
+        SUFeedURL: "https://raw.githubusercontent.com/makikub/screenshot-light-app/main/appcast.xml"
+        SUPublicEDKey: "HprDdsNj+cvgNTaqa1hMbEBx3HDs0z7w1P9F5XyKxtE="
+        SUEnableAutomaticChecks: true
+        SUScheduledCheckInterval: 86400
     entitlements:
       path: ScreenshotApp/ScreenshotApp.entitlements
+    dependencies:
+      - package: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.masakikubota.screenshot
