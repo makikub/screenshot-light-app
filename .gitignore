@@ -5,6 +5,8 @@ Package.resolved
 
 # Build output
 build/
+release/
+*.dmg
 
 # Xcode
 *.xcodeproj/
@@ -14,6 +16,9 @@ DerivedData/
 
 # macOS
 .DS_Store
+
+# Sparkle signing keys
+private-key-file
 
 # Claude Code
 .claude/
