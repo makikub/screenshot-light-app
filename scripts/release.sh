@@ -60,6 +60,31 @@ mkdir -p "$EXPORT_DIR"
 cp -R "$ARCHIVE_PATH/Products/Applications/$APP_NAME.app" "$APP_PATH"
 
 #───────────────────────────────────────────
+# 3.5. Sparkle 内部実行ファイルを Developer ID で再署名
+#      SwiftPM 配布の Sparkle は ad-hoc 署名のため、
+#      公証通過には末端から外側へ depth-first で再署名する必要がある
+#───────────────────────────────────────────
+SPARKLE_FW="$APP_PATH/Contents/Frameworks/Sparkle.framework"
+if [ -d "$SPARKLE_FW" ]; then
+    echo "==> Re-signing Sparkle internals (depth-first)..."
+    SIGN_OPTS=(--force --options=runtime --timestamp --sign "$IDENTITY")
+
+    codesign "${SIGN_OPTS[@]}" "$SPARKLE_FW/Versions/B/XPCServices/Downloader.xpc/Contents/MacOS/Downloader"
+    codesign "${SIGN_OPTS[@]}" "$SPARKLE_FW/Versions/B/XPCServices/Downloader.xpc"
+    codesign "${SIGN_OPTS[@]}" "$SPARKLE_FW/Versions/B/XPCServices/Installer.xpc/Contents/MacOS/Installer"
+    codesign "${SIGN_OPTS[@]}" "$SPARKLE_FW/Versions/B/XPCServices/Installer.xpc"
+    codesign "${SIGN_OPTS[@]}" "$SPARKLE_FW/Versions/B/Updater.app/Contents/MacOS/Updater"
+    codesign "${SIGN_OPTS[@]}" "$SPARKLE_FW/Versions/B/Updater.app"
+    codesign "${SIGN_OPTS[@]}" "$SPARKLE_FW/Versions/B/Autoupdate"
+    codesign "${SIGN_OPTS[@]}" "$SPARKLE_FW"
+
+    # 内部を変更したのでアプリ本体も再署名（entitlements を保持）
+    codesign "${SIGN_OPTS[@]}" \
+        --entitlements "$PROJECT_DIR/ScreenshotApp/ScreenshotApp.entitlements" \
+        "$APP_PATH"
+fi
+
+#───────────────────────────────────────────
 # 4. 署名の検証
 #───────────────────────────────────────────
 echo "==> Verifying code signature..."
