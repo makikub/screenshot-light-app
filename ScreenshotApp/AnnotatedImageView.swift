@@ -1,10 +1,14 @@
 import SwiftUI
 
 struct AnnotatedImageView: View {
-    let image: NSImage
+    @State private var image: NSImage
     @StateObject private var viewModel = CanvasViewModel()
     @State private var canvasSize: CGSize = .zero
     @State private var pixelatedImage: NSImage?
+
+    init(image: NSImage) {
+        _image = State(initialValue: image)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -51,6 +55,22 @@ struct AnnotatedImageView: View {
             .disabled(viewModel.annotations.isEmpty)
             .help("全消去")
 
+            if viewModel.currentTool == .crop {
+                Divider().frame(height: 20)
+
+                Button { applyCrop() } label: {
+                    Label("確定", systemImage: "checkmark")
+                }
+                .disabled(!viewModel.canApplyCrop)
+                .help(viewModel.annotations.isEmpty ? "選択範囲で画像をクロップ" : "注釈を消去してからクロップしてください")
+
+                Button { viewModel.cancelCrop() } label: {
+                    Image(systemName: "xmark")
+                }
+                .disabled(viewModel.cropSelection == nil)
+                .help("クロップ選択をキャンセル")
+            }
+
             Spacer()
 
             Button { copyToClipboard() } label: {
@@ -95,6 +115,10 @@ struct AnnotatedImageView: View {
                 if viewModel.isEditingText {
                     textEditingOverlay
                 }
+
+                if let cropSelection = viewModel.cropSelection {
+                    cropSelectionOverlay(cropSelection, in: displaySize)
+                }
             }
             .frame(width: displaySize.width, height: displaySize.height)
             .clipped()
@@ -108,7 +132,10 @@ struct AnnotatedImageView: View {
                 canvasSize = displaySize
                 pixelatedImage = ImagePixelator.pixelate(image)
             }
-            .onKeyPress(characters: .init(charactersIn: "123456")) { press in
+            .onChange(of: image) { _, newImage in
+                pixelatedImage = ImagePixelator.pixelate(newImage)
+            }
+            .onKeyPress(characters: .init(charactersIn: "1234567")) { press in
                 guard !viewModel.isEditingText else { return .ignored }
                 let tools = AnnotationTool.allCases
                 if let index = Int(String(press.characters.first ?? "0")),
@@ -176,6 +203,43 @@ struct AnnotatedImageView: View {
             .onSubmit {
                 viewModel.commitText()
             }
+    }
+
+    // MARK: - Crop
+
+    private func cropSelectionOverlay(_ selection: CGRect, in displaySize: CGSize) -> some View {
+        let rect = selection.intersection(CGRect(origin: .zero, size: displaySize))
+
+        return ZStack(alignment: .topLeading) {
+            Rectangle()
+                .fill(.black.opacity(0.35))
+                .mask {
+                    Rectangle()
+                        .overlay(alignment: .topLeading) {
+                            Rectangle()
+                                .frame(width: rect.width, height: rect.height)
+                                .offset(x: rect.minX, y: rect.minY)
+                                .blendMode(.destinationOut)
+                        }
+                }
+
+            Rectangle()
+                .stroke(.white, style: StrokeStyle(lineWidth: 1.5, dash: [6, 3]))
+                .frame(width: rect.width, height: rect.height)
+                .offset(x: rect.minX, y: rect.minY)
+        }
+        .compositingGroup()
+        .allowsHitTesting(false)
+    }
+
+    private func applyCrop() {
+        guard viewModel.canApplyCrop,
+              let selection = viewModel.cropSelection,
+              let cropped = ImageCropper.crop(image, to: selection, displayedIn: canvasSize)
+        else { return }
+
+        image = cropped
+        viewModel.finishCrop()
     }
 
     // MARK: - Export (Phase 3)

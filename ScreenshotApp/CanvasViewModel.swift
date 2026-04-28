@@ -24,6 +24,10 @@ final class CanvasViewModel: ObservableObject {
     var originalAnnotation: Annotation?
     var dragStartPoint: CGPoint = .zero
 
+    // Crop state
+    @Published var cropSelection: CGRect?
+    var isDrawingCropSelection = false
+
     // Undo history
     var history: [[Annotation]] = []
 
@@ -61,7 +65,12 @@ final class CanvasViewModel: ObservableObject {
     }
 
     var isDragActive: Bool {
-        currentAnnotation != nil || movingAnnotationIndex != nil
+        currentAnnotation != nil || movingAnnotationIndex != nil || isDrawingCropSelection
+    }
+
+    var canApplyCrop: Bool {
+        guard let cropSelection else { return false }
+        return annotations.isEmpty && cropSelection.width >= 4 && cropSelection.height >= 4
     }
 
     private func pushHistory() {
@@ -80,6 +89,10 @@ final class CanvasViewModel: ObservableObject {
                 originalAnnotation = annotations[index]
                 dragStartPoint = point
             }
+        case .crop:
+            dragStartPoint = point
+            isDrawingCropSelection = true
+            cropSelection = CGRect(origin: point, size: .zero)
         case .arrow:
             currentAnnotation = .arrow(ArrowAnnotation(
                 start: point, end: point,
@@ -112,6 +125,12 @@ final class CanvasViewModel: ObservableObject {
             return
         }
 
+        if currentTool == .crop {
+            guard isDrawingCropSelection else { return }
+            cropSelection = Self.normalizedRect(from: dragStartPoint, to: point)
+            return
+        }
+
         switch currentAnnotation {
         case .arrow(var a):
             a.end = point
@@ -136,6 +155,12 @@ final class CanvasViewModel: ObservableObject {
             handleDragChanged(to: point)
             movingAnnotationIndex = nil
             originalAnnotation = nil
+            return
+        }
+
+        if currentTool == .crop {
+            handleDragChanged(to: point)
+            isDrawingCropSelection = false
             return
         }
 
@@ -179,6 +204,8 @@ final class CanvasViewModel: ObservableObject {
         currentAnnotation = nil
         movingAnnotationIndex = nil
         originalAnnotation = nil
+        cropSelection = nil
+        isDrawingCropSelection = false
     }
 
     func clear() {
@@ -188,7 +215,28 @@ final class CanvasViewModel: ObservableObject {
         currentAnnotation = nil
         movingAnnotationIndex = nil
         originalAnnotation = nil
+        cropSelection = nil
+        isDrawingCropSelection = false
         isEditingText = false
         editingText = ""
+    }
+
+    func cancelCrop() {
+        cropSelection = nil
+        isDrawingCropSelection = false
+    }
+
+    func finishCrop() {
+        cropSelection = nil
+        currentTool = .arrow
+    }
+
+    private static func normalizedRect(from start: CGPoint, to end: CGPoint) -> CGRect {
+        CGRect(
+            x: min(start.x, end.x),
+            y: min(start.y, end.y),
+            width: abs(end.x - start.x),
+            height: abs(end.y - start.y)
+        )
     }
 }

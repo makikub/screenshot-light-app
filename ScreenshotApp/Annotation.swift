@@ -4,6 +4,7 @@ import SwiftUI
 
 enum AnnotationTool: String, CaseIterable, Identifiable {
     case move
+    case crop
     case arrow
     case rectangle
     case text
@@ -15,6 +16,7 @@ enum AnnotationTool: String, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .move:      return "移動"
+        case .crop:      return "クロップ"
         case .arrow:     return "矢印"
         case .rectangle: return "矩形"
         case .text:      return "テキスト"
@@ -26,6 +28,7 @@ enum AnnotationTool: String, CaseIterable, Identifiable {
     var iconName: String {
         switch self {
         case .move:      return "arrow.up.and.down.and.arrow.left.and.right"
+        case .crop:      return "crop"
         case .arrow:     return "arrow.up.right"
         case .rectangle: return "rectangle"
         case .text:      return "textformat"

@@ -19,7 +19,7 @@ struct ScreenshotApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra("Screenshot", systemImage: "camera") {
+        MenuBarExtra(Self.displayName, systemImage: "camera") {
             Button("範囲を選択して撮影") {
                 appDelegate.captureOrShowOnboarding()
             }
@@ -39,6 +39,10 @@ struct ScreenshotApp: App {
             }
             .keyboardShortcut("q", modifiers: [.command])
         }
+    }
+
+    private static var displayName: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Screenshot"
     }
 }
 

@@ -29,7 +29,7 @@ targets:
       path: ScreenshotApp/Info.plist
       properties:
         LSUIElement: true
-        CFBundleDisplayName: Screenshot
+        CFBundleDisplayName: "$(APP_DISPLAY_NAME)"
         CFBundleShortVersionString: "1.1"
         CFBundleVersion: "2"
         NSScreenCaptureUsageDescription: "スクリーンショットを撮影するためにアクセスが必要です"
@@ -43,6 +43,7 @@ targets:
       - package: Sparkle
     settings:
       base:
+        APP_DISPLAY_NAME: Screenshot
         PRODUCT_BUNDLE_IDENTIFIER: com.masakikubota.screenshot
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         ENABLE_APP_SANDBOX: NO
@@ -50,8 +51,12 @@ targets:
         PRODUCT_NAME: ScreenshotApp
       configs:
         Debug:
+          APP_DISPLAY_NAME: Screenshot Debug
+          PRODUCT_BUNDLE_IDENTIFIER: com.masakikubota.screenshot.debug
           CODE_SIGN_IDENTITY: "Developer ID Application"
           CODE_SIGN_STYLE: Manual
         Release:
+          APP_DISPLAY_NAME: Screenshot
+          PRODUCT_BUNDLE_IDENTIFIER: com.masakikubota.screenshot
           CODE_SIGN_IDENTITY: Developer ID Application
           CODE_SIGN_STYLE: Manual
