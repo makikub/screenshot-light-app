@@ -20,5 +20,13 @@
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure url="https://github.com/makikub/screenshot-light-app/releases/download/v1.2/ScreenshotApp.dmg" type="application/octet-stream" length="1552709" sparkle:edSignature="EhT7EI5VjVFBjepnWW+MQRpM7y62Gh0smWRgW4c4+bPyaNXx8htz9y6Luf7I9pyiUOF17fSl5771a3y7b4lfDw==" />
         </item>
+        <item>
+            <title>Version 1.3</title>
+            <pubDate>Tue, 28 Apr 2026 16:36:04 +0000</pubDate>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>1.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/makikub/screenshot-light-app/releases/download/v1.3/ScreenshotApp.dmg" type="application/octet-stream" length="3446273" sparkle:edSignature="j49J1nn8B9QLurEGPz22YptDW/XRovw49a+3Lxr7lX8XUKqYUR0ibnhOGDuFX0VZzoRjDeTX3qNwvm55imF0BA==" />
+        </item>
     </channel>
 </rss>
