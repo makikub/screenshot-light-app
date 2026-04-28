@@ -38,6 +38,24 @@ open ~/Library/Developer/Xcode/DerivedData/ScreenshotApp-*/Build/Products/Debug/
 
 実装完了後は必ず上記 3 ステップすべてを実行すること。権限リセット（手順 2）により TCC データベースから許可が削除され、起動時に画面収録の許可ダイアログが再表示される。
 
+## Distribution / Notarization Troubleshooting
+
+`bash scripts/release.sh` が失敗した場合、以下の5要素を順に確認する。どの段階で詰まるかでログの出方が変わるため、エラーメッセージから該当項目に飛ぶこと。
+
+| 段階 | 確認コマンド / 兆候 | 対処 |
+|---|---|---|
+| 1. Developer ID 証明書 | `security find-identity -v -p basic \| grep "Developer ID Application"` で `Masaki Kubota (L98U958G2N)` が出るか | 出なければ Xcode → Settings → Accounts → Manage Certificates から再発行、または `.p12` をインポート |
+| 2. notarytool プロファイル | `xcrun notarytool history --keychain-profile "notarytool-profile"` で履歴が出るか | 「No Keychain password item found」なら `xcrun notarytool store-credentials "notarytool-profile" --apple-id <ID> --team-id L98U958G2N --password <App用パスワード>` |
+| 3. PLA 同意状態 | `Error: HTTP status code: 403. A required agreement is missing or has expired.` | https://developer.apple.com/account の Agreements で更新版に再同意 |
+| 4. Xcode コンポーネント | `IDESimulatorFoundation` の `Symbol not found` エラー | `sudo xcodebuild -runFirstLaunch` で追加コンポーネントを更新 |
+| 5. Sparkle 内部署名 | `notarytool log` で `Sparkle.framework/Versions/B/...` が `not signed with a valid Developer ID certificate` 指摘 | `release.sh` の depth-first 再署名ステップ (3.5) が実行されているか確認。Sparkle のバージョン更新で内部構成が変わった場合は対象パスを更新 |
+
+公証ステータスの読み方:
+- `Accepted` → DMG は配布可能（`spctl -a -t open ...` で `accepted` / `source=Notarized Developer ID` を確認）
+- `Invalid` → `release.sh` が自動で `notarytool log` を出力するので `issues` 配列を見る
+
+Staple は配布の必須要件ではない（オフライン起動時の検証用）。失敗しても DMG は使える。後日 `xcrun stapler staple build/release/ScreenshotApp.dmg` 単独で再試行可能。
+
 ## Architecture
 
 macOS メニューバー常駐のスクリーンショット注釈アプリ。SwiftUI + AppKit ハイブリッド構成。

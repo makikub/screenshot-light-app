@@ -118,17 +118,40 @@ codesign --sign "$IDENTITY" "$DMG_PATH"
 
 #───────────────────────────────────────────
 # 7. Apple 公証に提出
+#      --wait は Accepted/Invalid いずれでも exit 0 を返すため、
+#      出力をログに残して status を文字列でチェックする
 #───────────────────────────────────────────
 echo "==> Submitting for notarization (this may take a few minutes)..."
+NOTARY_LOG="$BUILD_DIR/notarytool-submit.log"
 xcrun notarytool submit "$DMG_PATH" \
     --keychain-profile "$KEYCHAIN_PROFILE" \
-    --wait
+    --wait 2>&1 | tee "$NOTARY_LOG"
+
+if ! grep -q "status: Accepted" "$NOTARY_LOG"; then
+    echo ""
+    echo "==> Notarization did not succeed. Fetching detailed log..."
+    SUBMISSION_ID=$(grep -m1 "  id: " "$NOTARY_LOG" | awk '{print $2}')
+    if [ -n "$SUBMISSION_ID" ]; then
+        echo "    Submission ID: $SUBMISSION_ID"
+        xcrun notarytool log "$SUBMISSION_ID" \
+            --keychain-profile "$KEYCHAIN_PROFILE"
+    else
+        echo "    Could not extract submission ID from log."
+    fi
+    exit 1
+fi
 
 #───────────────────────────────────────────
 # 8. 公証チケットの埋め込み（Staple）
+#      staple 失敗は配布可否に直結しないため警告に留める
+#      （DMG 自体は Accepted で配布可能。後日 stapler を単独実行可）
 #───────────────────────────────────────────
 echo "==> Stapling notarization ticket..."
-xcrun stapler staple "$DMG_PATH"
+if ! xcrun stapler staple "$DMG_PATH"; then
+    echo ""
+    echo "    [WARN] Stapling failed — DMG is still notarized and distributable."
+    echo "    Retry later with: xcrun stapler staple \"$DMG_PATH\""
+fi
 
 #───────────────────────────────────────────
 # 完了
