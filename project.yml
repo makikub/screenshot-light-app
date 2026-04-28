@@ -30,8 +30,8 @@ targets:
       properties:
         LSUIElement: true
         CFBundleDisplayName: "$(APP_DISPLAY_NAME)"
-        CFBundleShortVersionString: "1.1"
-        CFBundleVersion: "2"
+        CFBundleShortVersionString: "1.2"
+        CFBundleVersion: "3"
         NSScreenCaptureUsageDescription: "スクリーンショットを撮影するためにアクセスが必要です"
         SUFeedURL: "https://raw.githubusercontent.com/makikub/screenshot-light-app/main/appcast.xml"
         SUPublicEDKey: "HprDdsNj+cvgNTaqa1hMbEBx3HDs0z7w1P9F5XyKxtE="
