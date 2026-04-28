@@ -1,8 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<?xml version='1.0' encoding='utf-8'?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
         <title>ScreenshotApp</title>
         <description>ScreenshotApp の最新アップデート情報</description>
         <language>ja</language>
+        <item>
+            <title>Version 1.1</title>
+            <pubDate>Tue, 28 Apr 2026 15:28:23 +0000</pubDate>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/makikub/screenshot-light-app/releases/download/v1.1/ScreenshotApp.dmg" type="application/octet-stream" length="1519599" sparkle:edSignature="kfTi/hSC0e5eqg8wENQLyzNPPjOMNIyl9aXGXc4PEDwA02b0OXdQ7dKi8CTLbAdek6+tRDu7FWCyNANNHSzvDA==" />
+        </item>
     </channel>
 </rss>

@@ -16,12 +16,62 @@ xcodegen generate
 swift build
 bash scripts/bundle.sh         # .app バンドル作成（コード署名なし）
 
-# リリースビルド（DMG + 公証）
+# リリースビルド（DMG + 公証 + appcast 自動更新）
 # 事前に notarytool のキーチェーンプロファイルを登録しておくこと
 bash scripts/release.sh
 ```
 
 `xcodebuild` を優先する。コード署名・Info.plist・Entitlements が自動処理される。
+
+## Release Workflow
+
+Sparkle 自動アップデート対応のため、以下の固定フローでリリースする。
+
+```bash
+# 1. バージョンを上げる（CFBundleShortVersionString と CFBundleVersion）
+bash scripts/bump_version.sh 1.1            # build は現在値+1
+bash scripts/bump_version.sh 1.1 5          # build を明示する場合
+
+# 2. DMG ビルド・公証・appcast.xml 更新（一連で実行）
+bash scripts/release.sh
+
+# 3. GitHub Releases に DMG をアップロード
+gh release create v1.1 build/release/ScreenshotApp.dmg --title "v1.1" --generate-notes
+
+# 4. 更新済み appcast.xml と Info.plist を main に push
+git add appcast.xml ScreenshotApp/Info.plist
+git commit -m "release: v1.1"
+git push
+```
+
+### release.sh の追加処理（手順 9）
+
+DMG 作成・公証完了後に以下を自動実行する:
+
+1. `Info.plist` から `CFBundleShortVersionString` と `CFBundleVersion` を読む
+2. `.build/artifacts/sparkle/Sparkle/bin/sign_update --ed-key-file private-key-file <DMG>` で EdDSA 署名と length を取得
+3. `appcast.xml` の `<channel>` に新 `<item>` を追記（同 `sparkle:version` の item があれば置換 — 冪等）
+4. enclosure URL は `${DMG_URL_BASE}/v<short>/ScreenshotApp.dmg`（既定値: GitHub Releases）
+
+### ローカル検証時の URL 上書き
+
+GitHub Releases に上げる前に手元で挙動を確認したい場合、`DMG_URL_BASE` 環境変数で enclosure URL を差し替える:
+
+```bash
+DMG_URL_BASE="http://localhost:8000" bash scripts/release.sh
+# 別ターミナルで feed と DMG を配信
+cd build/release && python3 -m http.server 8000
+# 旧版アプリを起動して feed URL を一時的に上書き
+defaults write com.masakikubota.screenshot SUFeedURL "http://localhost:8000/appcast.xml"
+# 検証完了後に元に戻す
+defaults delete com.masakikubota.screenshot SUFeedURL
+```
+
+### 注意点
+
+- **`private-key-file` は絶対に commit しない**（`.gitignore` 済み）。紛失すると全ユーザがアップデートを受けられなくなるため、1Password 等にバックアップ必須
+- Sparkle は `CFBundleVersion`（数値）で新旧を判定する。表示用の `CFBundleShortVersionString` だけ上げてもアップデート対象にならないので、`bump_version.sh` で両方更新すること
+- `appcast.xml` の `sparkle:edSignature` を手で編集してはいけない（署名検証が失敗する）。再生成が必要な場合は `release.sh` を再実行する
 
 ### 動作確認（プロセス停止 → 権限リセット → 再起動）
 

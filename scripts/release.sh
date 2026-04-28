@@ -24,6 +24,14 @@ EXPORT_DIR="$BUILD_DIR/export"
 APP_PATH="$EXPORT_DIR/$APP_NAME.app"
 DMG_PATH="$BUILD_DIR/$APP_NAME.dmg"
 
+PLIST="$PROJECT_DIR/ScreenshotApp/Info.plist"
+APPCAST="$PROJECT_DIR/appcast.xml"
+PRIVATE_KEY_FILE="$PROJECT_DIR/private-key-file"
+SIGN_UPDATE="$PROJECT_DIR/.build/artifacts/sparkle/Sparkle/bin/sign_update"
+
+# DMG の配信元ベース URL。ローカル検証時は DMG_URL_BASE で上書きできる。
+DMG_URL_BASE="${DMG_URL_BASE:-https://github.com/makikub/screenshot-light-app/releases/download}"
+
 #───────────────────────────────────────────
 # 0. クリーンアップ
 #───────────────────────────────────────────
@@ -32,11 +40,21 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
 #───────────────────────────────────────────
-# 1. XcodeGen でプロジェクト再生成
+# 1. XcodeGen でプロジェクト再生成 + Sparkle 成果物の解決
+#    （sign_update を .build/artifacts/sparkle/ に確実に展開させる）
 #───────────────────────────────────────────
 echo "==> Generating Xcode project..."
 cd "$PROJECT_DIR"
 xcodegen generate
+
+if [ ! -x "$SIGN_UPDATE" ]; then
+    echo "==> Resolving SwiftPM packages to materialize sign_update..."
+    swift package resolve
+fi
+if [ ! -x "$SIGN_UPDATE" ]; then
+    echo "ERROR: sign_update not found at $SIGN_UPDATE" >&2
+    exit 1
+fi
 
 #───────────────────────────────────────────
 # 2. Archive ビルド（Release 構成）
@@ -154,12 +172,102 @@ if ! xcrun stapler staple "$DMG_PATH"; then
 fi
 
 #───────────────────────────────────────────
+# 9. appcast.xml に新 item を追記（Sparkle EdDSA 署名）
+#      - Info.plist から version を読む
+#      - sign_update で edSignature と length を取得
+#      - 既存の同 build_number item があれば置換、無ければ追加
+#───────────────────────────────────────────
+echo "==> Updating appcast.xml..."
+
+SHORT_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PLIST")
+BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")
+DMG_URL="${DMG_URL_BASE}/v${SHORT_VERSION}/${APP_NAME}.dmg"
+
+echo "    version       : $SHORT_VERSION ($BUILD_NUMBER)"
+echo "    enclosure URL : $DMG_URL"
+
+# sign_update の出力例: sparkle:edSignature="..." length="..."
+SIGN_OUTPUT=$("$SIGN_UPDATE" --ed-key-file "$PRIVATE_KEY_FILE" "$DMG_PATH")
+ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')
+ENCLOSURE_LENGTH=$(echo "$SIGN_OUTPUT" | sed -n 's/.*length="\([^"]*\)".*/\1/p')
+
+if [ -z "$ED_SIGNATURE" ] || [ -z "$ENCLOSURE_LENGTH" ]; then
+    echo "ERROR: failed to parse sign_update output: $SIGN_OUTPUT" >&2
+    exit 1
+fi
+
+PUB_DATE=$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")
+
+SHORT_VERSION="$SHORT_VERSION" \
+BUILD_NUMBER="$BUILD_NUMBER" \
+DMG_URL="$DMG_URL" \
+ED_SIGNATURE="$ED_SIGNATURE" \
+ENCLOSURE_LENGTH="$ENCLOSURE_LENGTH" \
+PUB_DATE="$PUB_DATE" \
+APPCAST="$APPCAST" \
+python3 - <<'PYEOF'
+import os
+import xml.etree.ElementTree as ET
+
+SPARKLE_NS = "http://www.andymatuschak.org/xml-namespaces/sparkle"
+DC_NS = "http://purl.org/dc/elements/1.1/"
+ET.register_namespace("sparkle", SPARKLE_NS)
+ET.register_namespace("dc", DC_NS)
+
+appcast = os.environ["APPCAST"]
+short_version = os.environ["SHORT_VERSION"]
+build_number = os.environ["BUILD_NUMBER"]
+dmg_url = os.environ["DMG_URL"]
+ed_signature = os.environ["ED_SIGNATURE"]
+enclosure_length = os.environ["ENCLOSURE_LENGTH"]
+pub_date = os.environ["PUB_DATE"]
+
+tree = ET.parse(appcast)
+root = tree.getroot()
+channel = root.find("channel")
+if channel is None:
+    raise SystemExit("ERROR: <channel> not found in appcast.xml")
+
+# 同 build_number の item を削除（再リリース時の冪等性のため）
+for existing in list(channel.findall("item")):
+    v = existing.find(f"{{{SPARKLE_NS}}}version")
+    if v is not None and v.text == build_number:
+        channel.remove(existing)
+
+item = ET.SubElement(channel, "item")
+ET.SubElement(item, "title").text = f"Version {short_version}"
+ET.SubElement(item, "pubDate").text = pub_date
+ET.SubElement(item, f"{{{SPARKLE_NS}}}version").text = build_number
+ET.SubElement(item, f"{{{SPARKLE_NS}}}shortVersionString").text = short_version
+ET.SubElement(item, f"{{{SPARKLE_NS}}}minimumSystemVersion").text = "14.0"
+ET.SubElement(
+    item,
+    "enclosure",
+    {
+        "url": dmg_url,
+        "type": "application/octet-stream",
+        "length": enclosure_length,
+        f"{{{SPARKLE_NS}}}edSignature": ed_signature,
+    },
+)
+
+ET.indent(tree, space="    ")
+tree.write(appcast, encoding="utf-8", xml_declaration=True)
+PYEOF
+
+echo "    appcast.xml updated."
+
+#───────────────────────────────────────────
 # 完了
 #───────────────────────────────────────────
 echo ""
 echo "========================================="
 echo "  Done! DMG: $DMG_PATH"
 echo "========================================="
+echo ""
+echo "次のステップ:"
+echo "  1. gh release create v${SHORT_VERSION} \"$DMG_PATH\" --title \"v${SHORT_VERSION}\""
+echo "  2. git add appcast.xml ScreenshotApp/Info.plist && git commit && git push"
 echo ""
 echo "検証コマンド:"
 echo "  spctl --assess --type open --context context:primary-signature -v \"$DMG_PATH\""
