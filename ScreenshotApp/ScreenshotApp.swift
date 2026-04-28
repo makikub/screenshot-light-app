@@ -25,6 +25,11 @@ struct ScreenshotApp: App {
             }
             .keyboardShortcut("s", modifiers: [.command, .shift])
 
+            Button("全てのスクリーンショットを閉じる") {
+                appDelegate.closeAllScreenshots()
+            }
+            .keyboardShortcut("w", modifiers: [.command, .option])
+
             Divider()
 
             Button("アップデートを確認...") {
@@ -77,6 +82,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         screenshotManager.captureScreenshot()
+    }
+
+    func closeAllScreenshots() {
+        screenshotManager.closeAllScreenshots()
     }
 
     // MARK: - Onboarding

@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 final class ImageWindowController: NSWindowController, NSWindowDelegate {
+    var onClose: (() -> Void)?
 
     convenience init(image: NSImage) {
         let toolbarHeight: CGFloat = 44
@@ -24,6 +25,11 @@ final class ImageWindowController: NSWindowController, NSWindowDelegate {
 
         self.init(window: window)
         window.delegate = self
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        onClose?()
+        onClose = nil
     }
 
     // MARK: - Window size calculation

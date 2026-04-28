@@ -1,7 +1,7 @@
 import AppKit
 
 final class ScreenshotManager: ObservableObject {
-    private var windowController: ImageWindowController?
+    private var windowControllers: [ImageWindowController] = []
     private var thumbnailPanel: ThumbnailPanel?
 
     /// `screencapture -i -c` を実行し、撮影後にクリップボードから画像を取得して表示する
@@ -48,9 +48,26 @@ final class ScreenshotManager: ObservableObject {
 
     private func openEditor(with image: NSImage) {
         let controller = ImageWindowController(image: image)
+        controller.onClose = { [weak self, weak controller] in
+            guard let controller else { return }
+            self?.removeWindowController(controller)
+        }
         controller.showWindow(nil)
         controller.window?.orderFrontRegardless()
         NSApp.activate(ignoringOtherApps: true)
-        windowController = controller
+        windowControllers.append(controller)
+    }
+
+    func closeAllScreenshots() {
+        thumbnailPanel?.close()
+        thumbnailPanel = nil
+
+        let controllers = windowControllers
+        windowControllers.removeAll()
+        controllers.forEach { $0.close() }
+    }
+
+    private func removeWindowController(_ controller: ImageWindowController) {
+        windowControllers.removeAll { $0 === controller }
     }
 }
