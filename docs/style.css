@@ -86,14 +86,8 @@ kbd {
   margin: 0 0 40px;
 }
 
-.hero__version {
-  margin: 20px 0 4px;
-  font-size: 14px;
-  color: var(--color-muted);
-}
-
 .hero__requirement {
-  margin: 0;
+  margin: 20px 0 0;
   font-size: 13px;
   color: var(--color-muted);
 }
