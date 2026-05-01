@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScreenshotApp — macOS スクリーンショット注釈アプリ</title>
+  <meta name="description" content="メニューバー常駐の macOS スクリーンショット注釈アプリ。撮影した画像にその場で矢印・矩形・テキスト・モザイクなどの注釈を加えて保存・共有できる。">
+  <meta property="og:title" content="ScreenshotApp">
+  <meta property="og:description" content="macOS メニューバー常駐のスクリーンショット注釈アプリ">
+  <meta property="og:image" content="./icon.png">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="hero">
+    <img src="./icon.png" alt="ScreenshotApp icon" class="hero__icon" width="180" height="180">
+    <h1 class="hero__title">ScreenshotApp</h1>
+    <p class="hero__tagline">macOS メニューバー常駐のスクリーンショット注釈アプリ</p>
+    <p class="hero__description">撮影した画像にその場で注釈を加えて、保存・共有できる。</p>
+
+    <a id="download-button" class="button button--primary"
+       href="https://github.com/makikub/screenshot-light-app/releases/latest/download/ScreenshotApp.dmg">
+      ScreenshotApp.dmg をダウンロード
+    </a>
+
+    <p id="version-info" class="hero__version">最新版</p>
+    <p class="hero__requirement">macOS 14.0 以降が必要です</p>
+  </header>
+
+  <main>
+    <section class="section" id="features">
+      <h2 class="section__title">機能</h2>
+      <p class="section__lead">5種類の注釈ツールでスクリーンショットを素早く編集できます。</p>
+
+      <div class="cards">
+        <article class="card">
+          <h3 class="card__title">矢印</h3>
+          <p class="card__body">注目させたい箇所を指し示す。</p>
+        </article>
+        <article class="card">
+          <h3 class="card__title">矩形</h3>
+          <p class="card__body">領域を囲って強調する。</p>
+        </article>
+        <article class="card">
+          <h3 class="card__title">テキスト</h3>
+          <p class="card__body">説明文を画像上に配置する。</p>
+        </article>
+        <article class="card">
+          <h3 class="card__title">フリーハンド</h3>
+          <p class="card__body">自由に線を引いて描画する。</p>
+        </article>
+        <article class="card">
+          <h3 class="card__title">モザイク</h3>
+          <p class="card__body">機密情報をピクセレートで隠す。</p>
+        </article>
+      </div>
+
+      <ul class="extras">
+        <li>メニューバーのカメラアイコンからワンクリックで範囲選択キャプチャ</li>
+        <li>フローティングウィンドウで即座にプレビュー</li>
+        <li>カラーピッカーで描画色を変更</li>
+        <li>Undo / 全消去</li>
+        <li>クリップボードにコピー (<kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>C</kbd>)</li>
+        <li>PNG ファイルとして保存 (<kbd>⌘</kbd> <kbd>S</kbd>) — オリジナル解像度で出力</li>
+      </ul>
+    </section>
+
+    <section class="section" id="install">
+      <h2 class="section__title">インストール手順</h2>
+      <p class="section__lead">GitHub アカウントは不要です。下のボタンから DMG をダウンロードして、4ステップで完了します。</p>
+
+      <ol class="steps">
+        <li class="steps__item">
+          <span class="steps__num">1</span>
+          <div>
+            <h3 class="steps__title">DMG をダウンロード</h3>
+            <p>このページの「<strong>ScreenshotApp.dmg をダウンロード</strong>」ボタンをクリックします。</p>
+          </div>
+        </li>
+        <li class="steps__item">
+          <span class="steps__num">2</span>
+          <div>
+            <h3 class="steps__title">DMG を開く</h3>
+            <p>ダウンロードした <code>ScreenshotApp.dmg</code> をダブルクリックで開きます。</p>
+          </div>
+        </li>
+        <li class="steps__item">
+          <span class="steps__num">3</span>
+          <div>
+            <h3 class="steps__title">Applications にドラッグ</h3>
+            <p>表示されたウィンドウで <strong>ScreenshotApp.app</strong> を <strong>Applications</strong> フォルダのアイコンへドラッグ&amp;ドロップします。</p>
+          </div>
+        </li>
+        <li class="steps__item">
+          <span class="steps__num">4</span>
+          <div>
+            <h3 class="steps__title">初回起動 (Gatekeeper 警告の対処)</h3>
+            <p>Applications から ScreenshotApp を起動します。「<em>開発元を確認できないため開けません</em>」というメッセージが出た場合は、Finder で <strong>Control + クリック (もしくは右クリック)</strong> し、メニューから <strong>「開く」</strong> を選択してください。</p>
+            <p class="steps__hint">※ 画面収録の許可ダイアログが表示されたら、システム設定 → プライバシーとセキュリティ → 画面収録 で ScreenshotApp を有効にしてください。</p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="install-cta">
+        <a class="button button--primary"
+           href="https://github.com/makikub/screenshot-light-app/releases/latest/download/ScreenshotApp.dmg">
+          ScreenshotApp.dmg をダウンロード
+        </a>
+      </div>
+    </section>
+
+    <section class="section" id="requirements">
+      <h2 class="section__title">システム要件</h2>
+      <ul class="requirements">
+        <li><strong>macOS 14.0</strong> 以降 (Sonoma 以降)</li>
+        <li>Apple Silicon / Intel どちらにも対応</li>
+        <li>外部依存なし — 標準 Apple フレームワークのみ使用</li>
+        <li>自動アップデート対応 (Sparkle) — 新バージョン公開時にアプリ内で通知されます</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>
+      <a href="https://github.com/makikub/screenshot-light-app">GitHub リポジトリ</a> ·
+      <a href="https://github.com/makikub/screenshot-light-app/releases">リリース一覧</a> ·
+      MIT License
+    </p>
+    <p class="footer__copy">© Masaki Kubota</p>
+  </footer>
+
+  <script src="./script.js" defer></script>
+</body>
+</html>
