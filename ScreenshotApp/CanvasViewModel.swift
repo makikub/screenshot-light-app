@@ -70,7 +70,7 @@ final class CanvasViewModel: ObservableObject {
 
     var canApplyCrop: Bool {
         guard let cropSelection else { return false }
-        return annotations.isEmpty && cropSelection.width >= 4 && cropSelection.height >= 4
+        return cropSelection.width >= 4 && cropSelection.height >= 4
     }
 
     private func pushHistory() {
@@ -226,7 +226,14 @@ final class CanvasViewModel: ObservableObject {
         isDrawingCropSelection = false
     }
 
-    func finishCrop() {
+    func finishCrop(clearingAnnotations: Bool = false) {
+        if clearingAnnotations {
+            annotations.removeAll()
+            history.removeAll()
+            currentAnnotation = nil
+            movingAnnotationIndex = nil
+            originalAnnotation = nil
+        }
         cropSelection = nil
         currentTool = .arrow
     }

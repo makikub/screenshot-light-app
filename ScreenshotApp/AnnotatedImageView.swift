@@ -62,7 +62,7 @@ struct AnnotatedImageView: View {
                     Label("確定", systemImage: "checkmark")
                 }
                 .disabled(!viewModel.canApplyCrop)
-                .help(viewModel.annotations.isEmpty ? "選択範囲で画像をクロップ" : "注釈を消去してからクロップしてください")
+                .help("選択範囲で画像をクロップ")
 
                 Button { viewModel.cancelCrop() } label: {
                     Image(systemName: "xmark")
@@ -233,13 +233,30 @@ struct AnnotatedImageView: View {
     }
 
     private func applyCrop() {
+        if viewModel.isEditingText { viewModel.commitText() }
+
         guard viewModel.canApplyCrop,
-              let selection = viewModel.cropSelection,
-              let cropped = ImageCropper.crop(image, to: selection, displayedIn: canvasSize)
+              let selection = viewModel.cropSelection
+        else { return }
+
+        let shouldBakeAnnotations = !viewModel.annotations.isEmpty
+        let sourceImage: NSImage
+        if shouldBakeAnnotations {
+            guard let rendered = ExportManager.render(
+                image: image,
+                annotations: viewModel.annotations,
+                canvasSize: canvasSize
+            ) else { return }
+            sourceImage = rendered
+        } else {
+            sourceImage = image
+        }
+
+        guard let cropped = ImageCropper.crop(sourceImage, to: selection, displayedIn: canvasSize)
         else { return }
 
         image = cropped
-        viewModel.finishCrop()
+        viewModel.finishCrop(clearingAnnotations: shouldBakeAnnotations)
     }
 
     // MARK: - Export (Phase 3)
