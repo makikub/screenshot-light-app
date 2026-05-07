@@ -176,7 +176,10 @@ final class CanvasViewModel: ObservableObject {
 
     func handleTap(at point: CGPoint) {
         guard currentTool == .text else { return }
-        if isEditingText { commitText() }
+        if isEditingText {
+            commitText()
+            return
+        }
         isEditingText = true
         editingTextPosition = point
         editingText = ""

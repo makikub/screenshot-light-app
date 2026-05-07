@@ -5,6 +5,7 @@ struct AnnotatedImageView: View {
     @StateObject private var viewModel = CanvasViewModel()
     @State private var canvasSize: CGSize = .zero
     @State private var pixelatedImage: NSImage?
+    @FocusState private var isTextFieldFocused: Bool
 
     init(image: NSImage) {
         _image = State(initialValue: image)
@@ -96,7 +97,7 @@ struct AnnotatedImageView: View {
         GeometryReader { geometry in
             let displaySize = imageDisplaySize(in: geometry.size)
 
-            ZStack {
+            ZStack(alignment: .topLeading) {
                 Image(nsImage: image)
                     .resizable()
 
@@ -134,6 +135,13 @@ struct AnnotatedImageView: View {
             }
             .onChange(of: image) { _, newImage in
                 pixelatedImage = ImagePixelator.pixelate(newImage)
+            }
+            .onChange(of: viewModel.isEditingText) { _, isEditingText in
+                if isEditingText {
+                    focusTextField()
+                } else {
+                    isTextFieldFocused = false
+                }
             }
             .onKeyPress(characters: .init(charactersIn: "1234567")) { press in
                 guard !viewModel.isEditingText else { return .ignored }
@@ -191,18 +199,31 @@ struct AnnotatedImageView: View {
     // MARK: - Text editing overlay
 
     private var textEditingOverlay: some View {
-        TextField("テキストを入力", text: $viewModel.editingText)
+        TextField("テキストを入力（Enterで確定）", text: $viewModel.editingText)
             .textFieldStyle(.plain)
+            .focused($isTextFieldFocused)
             .font(.system(size: viewModel.fontSize, weight: .bold))
             .foregroundStyle(viewModel.strokeColor)
             .padding(4)
             .background(Color.white.opacity(0.8))
             .cornerRadius(4)
             .fixedSize()
-            .position(viewModel.editingTextPosition)
+            .offset(
+                x: viewModel.editingTextPosition.x,
+                y: viewModel.editingTextPosition.y
+            )
+            .onAppear {
+                focusTextField()
+            }
             .onSubmit {
                 viewModel.commitText()
             }
+    }
+
+    private func focusTextField() {
+        DispatchQueue.main.async {
+            isTextFieldFocused = true
+        }
     }
 
     // MARK: - Crop
