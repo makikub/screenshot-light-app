@@ -13,6 +13,9 @@ final class CanvasViewModel: ObservableObject {
     @Published var fontSize: CGFloat = 20 {
         didSet { UserDefaults.standard.set(Double(fontSize), forKey: "fontSize") }
     }
+    @Published var mosaicBlockSize: CGFloat = 8 {
+        didSet { UserDefaults.standard.set(Double(mosaicBlockSize), forKey: "mosaicBlockSize") }
+    }
 
     // Text editing state
     @Published var isEditingText = false
@@ -41,6 +44,9 @@ final class CanvasViewModel: ObservableObject {
         }
         if defaults.object(forKey: "fontSize") != nil {
             fontSize = CGFloat(defaults.double(forKey: "fontSize"))
+        }
+        if defaults.object(forKey: "mosaicBlockSize") != nil {
+            mosaicBlockSize = CGFloat(defaults.double(forKey: "mosaicBlockSize"))
         }
     }
 
@@ -110,7 +116,8 @@ final class CanvasViewModel: ObservableObject {
             ))
         case .mosaic:
             currentAnnotation = .mosaic(MosaicAnnotation(
-                origin: point, size: .zero
+                origin: point, size: .zero,
+                blockSize: mosaicBlockSize
             ))
         case .text:
             break

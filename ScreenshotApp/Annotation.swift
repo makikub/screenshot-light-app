@@ -93,6 +93,7 @@ struct MosaicAnnotation {
     let id = UUID()
     var origin: CGPoint
     var size: CGSize
+    var blockSize: CGFloat
 }
 
 // MARK: - Annotation geometry

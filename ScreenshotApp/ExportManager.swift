@@ -10,15 +10,13 @@ enum ExportManager {
     static func render(image: NSImage, annotations: [Annotation], canvasSize: CGSize) -> NSImage? {
         guard canvasSize.width > 0, canvasSize.height > 0 else { return nil }
 
-        // モザイク注釈がある場合はピクセレート画像を生成
-        let hasMosaic = annotations.contains { if case .mosaic = $0 { return true }; return false }
-        let pixelated = hasMosaic ? ImagePixelator.pixelate(image) : nil
+        let pixelatedImages = makePixelatedImages(for: image, annotations: annotations)
 
         let exportView = ExportableCanvasView(
             image: image,
             annotations: annotations,
             size: canvasSize,
-            pixelatedImage: pixelated
+            pixelatedImages: pixelatedImages
         )
 
         let renderer = ImageRenderer(content: exportView)
@@ -31,6 +29,17 @@ enum ExportManager {
         }
 
         return renderer.nsImage
+    }
+
+    private static func makePixelatedImages(for image: NSImage, annotations: [Annotation]) -> [Int: NSImage] {
+        let blockSizes = Set(annotations.compactMap { annotation -> Int? in
+            guard case .mosaic(let mosaic) = annotation else { return nil }
+            return Int(mosaic.blockSize.rounded())
+        })
+
+        return blockSizes.reduce(into: [:]) { images, blockSize in
+            images[blockSize] = ImagePixelator.pixelate(image, blockSize: CGFloat(blockSize))
+        }
     }
 
     // MARK: - Clipboard
@@ -122,7 +131,7 @@ private struct ExportableCanvasView: View {
     let image: NSImage
     let annotations: [Annotation]
     let size: CGSize
-    let pixelatedImage: NSImage?
+    let pixelatedImages: [Int: NSImage]
 
     var body: some View {
         ZStack {
@@ -132,7 +141,7 @@ private struct ExportableCanvasView: View {
             Canvas { context, canvasSize in
                 AnnotationRenderer.draw(
                     annotations, in: &context,
-                    size: canvasSize, pixelatedImage: pixelatedImage
+                    size: canvasSize, pixelatedImages: pixelatedImages
                 )
             }
         }

@@ -3,12 +3,12 @@ import SwiftUI
 /// Canvas 描画とエクスポートの両方で使用する共通レンダラー
 enum AnnotationRenderer {
 
-    /// 注釈を描画する。モザイクがある場合は pixelatedImage を使用する。
+    /// 注釈を描画する。モザイクがある場合は荒さ別のピクセレート画像を使用する。
     static func draw(
         _ annotations: [Annotation],
         in context: inout GraphicsContext,
         size: CGSize,
-        pixelatedImage: NSImage? = nil,
+        pixelatedImages: [Int: NSImage] = [:],
         selectedAnnotationId: UUID? = nil
     ) {
         for annotation in annotations {
@@ -18,7 +18,7 @@ enum AnnotationRenderer {
             case .text(let t):      drawText(t, in: &context)
             case .freehand(let f):  drawFreehand(f, in: &context)
             case .mosaic(let m):
-                if let pixelatedImage {
+                if let pixelatedImage = pixelatedImages[Int(m.blockSize.rounded())] {
                     drawMosaic(m, in: &context, size: size, pixelatedImage: pixelatedImage)
                 }
             }
@@ -230,18 +230,16 @@ enum AnnotationRenderer {
 enum ImagePixelator {
 
     /// CIPixellate フィルタで画像全体をモザイク化した NSImage を返す
-    static func pixelate(_ image: NSImage) -> NSImage? {
+    static func pixelate(_ image: NSImage, blockSize: CGFloat) -> NSImage? {
         guard let tiffData = image.tiffRepresentation,
               let ciImage = CIImage(data: tiffData)
         else { return nil }
 
-        // ブロックサイズを画像の大きさに応じて決定
-        let maxDim = max(ciImage.extent.width, ciImage.extent.height)
-        let blockSize = max(8, maxDim / 60)
+        let pixelBlockSize = max(2, blockSize)
 
         guard let filter = CIFilter(name: "CIPixellate") else { return nil }
         filter.setValue(ciImage, forKey: kCIInputImageKey)
-        filter.setValue(blockSize, forKey: kCIInputScaleKey)
+        filter.setValue(pixelBlockSize, forKey: kCIInputScaleKey)
         filter.setValue(CIVector(x: 0, y: 0), forKey: kCIInputCenterKey)
 
         guard let output = filter.outputImage else { return nil }

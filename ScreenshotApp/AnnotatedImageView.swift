@@ -4,7 +4,7 @@ struct AnnotatedImageView: View {
     @State private var image: NSImage
     @StateObject private var viewModel = CanvasViewModel()
     @State private var canvasSize: CGSize = .zero
-    @State private var pixelatedImage: NSImage?
+    @State private var pixelatedImages: [Int: NSImage] = [:]
     @FocusState private var isTextFieldFocused: Bool
 
     init(image: NSImage) {
@@ -37,9 +37,13 @@ struct AnnotatedImageView: View {
 
             Divider().frame(height: 20)
 
-            ColorPicker("", selection: $viewModel.strokeColor)
-                .labelsHidden()
-                .frame(width: 30)
+            if viewModel.currentTool == .mosaic {
+                mosaicBlockSizeControl
+            } else {
+                ColorPicker("", selection: $viewModel.strokeColor)
+                    .labelsHidden()
+                    .frame(width: 30)
+            }
 
             Divider().frame(height: 20)
 
@@ -108,7 +112,7 @@ struct AnnotatedImageView: View {
                     }
                     AnnotationRenderer.draw(
                         allAnnotations, in: &context,
-                        size: size, pixelatedImage: pixelatedImage,
+                        size: size, pixelatedImages: pixelatedImages,
                         selectedAnnotationId: viewModel.movingAnnotationIndex.map { viewModel.annotations[$0].id }
                     )
                 }
@@ -131,10 +135,19 @@ struct AnnotatedImageView: View {
             }
             .onAppear {
                 canvasSize = displaySize
-                pixelatedImage = ImagePixelator.pixelate(image)
+                refreshPixelatedImages()
             }
             .onChange(of: image) { _, newImage in
-                pixelatedImage = ImagePixelator.pixelate(newImage)
+                refreshPixelatedImages(for: newImage)
+            }
+            .onChange(of: viewModel.mosaicBlockSize) {
+                refreshPixelatedImages()
+            }
+            .onChange(of: viewModel.annotations.map(\.id)) {
+                refreshPixelatedImages()
+            }
+            .onChange(of: viewModel.currentAnnotation?.id) {
+                refreshPixelatedImages()
             }
             .onChange(of: viewModel.isEditingText) { _, isEditingText in
                 if isEditingText {
@@ -155,6 +168,37 @@ struct AnnotatedImageView: View {
                 return .ignored
             }
         }
+    }
+
+    private var mosaicBlockSizeControl: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "square.grid.3x3")
+                .frame(width: 16, height: 16)
+            Slider(value: $viewModel.mosaicBlockSize, in: 2...32, step: 1)
+                .frame(width: 110)
+                .help("モザイクの荒さ")
+            Text("\(Int(viewModel.mosaicBlockSize))")
+                .monospacedDigit()
+                .frame(width: 24, alignment: .trailing)
+        }
+        .help("モザイクの荒さ")
+    }
+
+    private func refreshPixelatedImages(for sourceImage: NSImage? = nil) {
+        let sourceImage = sourceImage ?? image
+        let blockSizes = Set(mosaicBlockSizes(in: viewModel.annotations + [viewModel.currentAnnotation].compactMap { $0 }))
+        pixelatedImages = blockSizes.reduce(into: [:]) { images, blockSize in
+            images[blockSize] = ImagePixelator.pixelate(sourceImage, blockSize: CGFloat(blockSize))
+        }
+    }
+
+    private func mosaicBlockSizes(in annotations: [Annotation]) -> [Int] {
+        var sizes = annotations.compactMap { annotation -> Int? in
+            guard case .mosaic(let mosaic) = annotation else { return nil }
+            return Int(mosaic.blockSize.rounded())
+        }
+        sizes.append(Int(viewModel.mosaicBlockSize.rounded()))
+        return sizes
     }
 
     /// 利用可能な領域内で画像のアスペクト比を維持したサイズを計算
