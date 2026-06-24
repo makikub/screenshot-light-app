@@ -91,9 +91,124 @@ enum AnnotationRenderer {
             width: abs(r.size.width),
             height: abs(r.size.height)
         )
-        context.stroke(Path(roundedRect: rect, cornerRadius: 2),
-                       with: .color(r.color),
-                       style: StrokeStyle(lineWidth: r.lineWidth))
+        let path = Path(roundedRect: rect, cornerRadius: 2)
+
+        switch r.style {
+        case .solid:
+            context.stroke(
+                path,
+                with: .color(r.color),
+                style: StrokeStyle(lineWidth: r.lineWidth)
+            )
+        case .dashed:
+            context.stroke(
+                path,
+                with: .color(r.color),
+                style: StrokeStyle(
+                    lineWidth: r.lineWidth,
+                    lineCap: .round,
+                    lineJoin: .round,
+                    dash: [r.lineWidth * 4, r.lineWidth * 2]
+                )
+            )
+        case .dotted:
+            context.stroke(
+                path,
+                with: .color(r.color),
+                style: StrokeStyle(
+                    lineWidth: r.lineWidth,
+                    lineCap: .round,
+                    lineJoin: .round,
+                    dash: [0, r.lineWidth * 2.2]
+                )
+            )
+        case .crayon:
+            drawCrayonRect(r, rect: rect, in: &context)
+        }
+    }
+
+    private static func drawCrayonRect(_ r: RectAnnotation, rect: CGRect, in context: inout GraphicsContext) {
+        guard rect.width > 1, rect.height > 1 else { return }
+
+        let amplitude = min(max(r.lineWidth * 0.45, 0.8), 3)
+        let step = max(5, r.lineWidth * 2)
+        let strokeWidth = max(1, r.lineWidth * 0.72)
+
+        for pass in 0..<5 {
+            let path = roughRectPath(rect, amplitude: amplitude, step: step, pass: pass)
+            context.stroke(
+                path,
+                with: .color(r.color.opacity(0.42)),
+                style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round, lineJoin: .round)
+            )
+        }
+    }
+
+    private static func roughRectPath(
+        _ rect: CGRect,
+        amplitude: CGFloat,
+        step: CGFloat,
+        pass: Int
+    ) -> Path {
+        let corners = [
+            CGPoint(x: rect.minX, y: rect.minY),
+            CGPoint(x: rect.maxX, y: rect.minY),
+            CGPoint(x: rect.maxX, y: rect.maxY),
+            CGPoint(x: rect.minX, y: rect.maxY)
+        ]
+        var path = Path()
+        var hasMoved = false
+
+        for index in corners.indices {
+            let start = corners[index]
+            let end = corners[(index + 1) % corners.count]
+            appendRoughLine(
+                from: start,
+                to: end,
+                amplitude: amplitude,
+                step: step,
+                edgeIndex: index,
+                pass: pass,
+                to: &path,
+                hasMoved: &hasMoved
+            )
+        }
+
+        path.closeSubpath()
+        return path
+    }
+
+    private static func appendRoughLine(
+        from start: CGPoint,
+        to end: CGPoint,
+        amplitude: CGFloat,
+        step: CGFloat,
+        edgeIndex: Int,
+        pass: Int,
+        to path: inout Path,
+        hasMoved: inout Bool
+    ) {
+        let dx = end.x - start.x
+        let dy = end.y - start.y
+        let length = max(hypot(dx, dy), 1)
+        let segmentCount = max(1, Int(ceil(length / step)))
+        let nx = -dy / length
+        let ny = dx / length
+
+        for segment in 0...segmentCount {
+            let t = CGFloat(segment) / CGFloat(segmentCount)
+            let base = CGPoint(x: start.x + dx * t, y: start.y + dy * t)
+            let wobbleSeed = CGFloat((pass + 1) * 17 + (edgeIndex + 1) * 31 + segment * 7)
+            let wobble = (sin(wobbleSeed) + sin(wobbleSeed * 0.47) * 0.55) * amplitude
+            let point = CGPoint(x: base.x + nx * wobble, y: base.y + ny * wobble)
+
+            if hasMoved {
+                path.addLine(to: point)
+            } else {
+                path.move(to: point)
+                hasMoved = true
+            }
+        }
     }
 
     // MARK: - Text

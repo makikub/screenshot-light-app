@@ -10,6 +10,9 @@ final class CanvasViewModel: ObservableObject {
     @Published var lineWidth: CGFloat = 3 {
         didSet { UserDefaults.standard.set(Double(lineWidth), forKey: "lineWidth") }
     }
+    @Published var rectStyle: RectStyle = .solid {
+        didSet { UserDefaults.standard.set(rectStyle.rawValue, forKey: "rectStyle") }
+    }
     @Published var fontSize: CGFloat = 20 {
         didSet { UserDefaults.standard.set(Double(fontSize), forKey: "fontSize") }
     }
@@ -41,6 +44,10 @@ final class CanvasViewModel: ObservableObject {
         }
         if defaults.object(forKey: "lineWidth") != nil {
             lineWidth = CGFloat(defaults.double(forKey: "lineWidth"))
+        }
+        if let savedStyle = defaults.string(forKey: "rectStyle"),
+           let style = RectStyle(rawValue: savedStyle) {
+            rectStyle = style
         }
         if defaults.object(forKey: "fontSize") != nil {
             fontSize = CGFloat(defaults.double(forKey: "fontSize"))
@@ -107,7 +114,8 @@ final class CanvasViewModel: ObservableObject {
         case .rectangle:
             currentAnnotation = .rectangle(RectAnnotation(
                 origin: point, size: .zero,
-                color: strokeColor, lineWidth: lineWidth
+                color: strokeColor, lineWidth: lineWidth,
+                style: rectStyle
             ))
         case .freehand:
             currentAnnotation = .freehand(FreehandAnnotation(

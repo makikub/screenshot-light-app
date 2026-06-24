@@ -43,6 +43,14 @@ struct AnnotatedImageView: View {
                 ColorPicker("", selection: $viewModel.strokeColor)
                     .labelsHidden()
                     .frame(width: 30)
+
+                if showsLineWidthControl {
+                    lineWidthControl
+                }
+
+                if viewModel.currentTool == .rectangle {
+                    rectStyleControl
+                }
             }
 
             Divider().frame(height: 20)
@@ -182,6 +190,46 @@ struct AnnotatedImageView: View {
                 .frame(width: 24, alignment: .trailing)
         }
         .help("モザイクの荒さ")
+    }
+
+    private var showsLineWidthControl: Bool {
+        switch viewModel.currentTool {
+        case .arrow, .rectangle, .freehand:
+            return true
+        case .move, .crop, .text, .mosaic:
+            return false
+        }
+    }
+
+    private var lineWidthControl: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "lineweight")
+                .frame(width: 16, height: 16)
+            Slider(value: $viewModel.lineWidth, in: 1...16, step: 1)
+                .frame(width: 90)
+                .help("線の太さ")
+            Text("\(Int(viewModel.lineWidth))")
+                .monospacedDigit()
+                .frame(width: 18, alignment: .trailing)
+        }
+        .help("線の太さ")
+    }
+
+    private var rectStyleControl: some View {
+        Menu {
+            ForEach(RectStyle.allCases) { style in
+                Button {
+                    viewModel.rectStyle = style
+                } label: {
+                    Label(style.label, systemImage: style.iconName)
+                }
+            }
+        } label: {
+            Image(systemName: viewModel.rectStyle.iconName)
+                .frame(width: 24, height: 24)
+        }
+        .menuStyle(.button)
+        .help("矩形スタイル: \(viewModel.rectStyle.label)")
     }
 
     private func refreshPixelatedImages(for sourceImage: NSImage? = nil) {

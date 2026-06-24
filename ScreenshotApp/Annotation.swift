@@ -38,6 +38,33 @@ enum AnnotationTool: String, CaseIterable, Identifiable {
     }
 }
 
+enum RectStyle: String, CaseIterable, Identifiable {
+    case solid
+    case dashed
+    case dotted
+    case crayon
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .solid:  return "実線"
+        case .dashed: return "点線"
+        case .dotted: return "ドット"
+        case .crayon: return "クレヨン"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .solid:  return "rectangle"
+        case .dashed: return "rectangle.dashed"
+        case .dotted: return "circle.grid.2x2"
+        case .crayon: return "pencil.tip"
+        }
+    }
+}
+
 // MARK: - Annotation types
 
 enum Annotation: Identifiable {
@@ -72,6 +99,7 @@ struct RectAnnotation {
     var size: CGSize
     var color: Color
     var lineWidth: CGFloat
+    var style: RectStyle = .solid
 }
 
 struct TextAnnotation {
