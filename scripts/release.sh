@@ -22,6 +22,7 @@ BUILD_DIR="$PROJECT_DIR/build/release"
 ARCHIVE_PATH="$BUILD_DIR/$APP_NAME.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 APP_PATH="$EXPORT_DIR/$APP_NAME.app"
+APP_PLIST="$APP_PATH/Contents/Info.plist"
 DMG_PATH="$BUILD_DIR/$APP_NAME.dmg"
 
 PLIST="$PROJECT_DIR/ScreenshotApp/Info.plist"
@@ -179,11 +180,13 @@ fi
 #───────────────────────────────────────────
 echo "==> Updating appcast.xml..."
 
-SHORT_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PLIST")
-BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")
+SHORT_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PLIST")
+BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP_PLIST")
+MIN_SYSTEM_VERSION=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "$APP_PLIST")
 DMG_URL="${DMG_URL_BASE}/v${SHORT_VERSION}/${APP_NAME}.dmg"
 
 echo "    version       : $SHORT_VERSION ($BUILD_NUMBER)"
+echo "    minimum macOS : $MIN_SYSTEM_VERSION"
 echo "    enclosure URL : $DMG_URL"
 
 # sign_update の出力例: sparkle:edSignature="..." length="..."
@@ -200,6 +203,7 @@ PUB_DATE=$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")
 
 SHORT_VERSION="$SHORT_VERSION" \
 BUILD_NUMBER="$BUILD_NUMBER" \
+MIN_SYSTEM_VERSION="$MIN_SYSTEM_VERSION" \
 DMG_URL="$DMG_URL" \
 ED_SIGNATURE="$ED_SIGNATURE" \
 ENCLOSURE_LENGTH="$ENCLOSURE_LENGTH" \
@@ -217,6 +221,7 @@ ET.register_namespace("dc", DC_NS)
 appcast = os.environ["APPCAST"]
 short_version = os.environ["SHORT_VERSION"]
 build_number = os.environ["BUILD_NUMBER"]
+minimum_system_version = os.environ["MIN_SYSTEM_VERSION"]
 dmg_url = os.environ["DMG_URL"]
 ed_signature = os.environ["ED_SIGNATURE"]
 enclosure_length = os.environ["ENCLOSURE_LENGTH"]
@@ -239,7 +244,7 @@ ET.SubElement(item, "title").text = f"Version {short_version}"
 ET.SubElement(item, "pubDate").text = pub_date
 ET.SubElement(item, f"{{{SPARKLE_NS}}}version").text = build_number
 ET.SubElement(item, f"{{{SPARKLE_NS}}}shortVersionString").text = short_version
-ET.SubElement(item, f"{{{SPARKLE_NS}}}minimumSystemVersion").text = "14.0"
+ET.SubElement(item, f"{{{SPARKLE_NS}}}minimumSystemVersion").text = minimum_system_version
 ET.SubElement(
     item,
     "enclosure",
