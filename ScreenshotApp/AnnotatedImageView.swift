@@ -16,91 +16,119 @@ struct AnnotatedImageView: View {
             toolbarSection
             canvasSection
         }
+        .background(Color(nsColor: .underPageBackgroundColor))
     }
 
     // MARK: - Toolbar
 
     private var toolbarSection: some View {
-        HStack(spacing: 8) {
-            ForEach(AnnotationTool.allCases) { tool in
-                Button {
-                    if viewModel.isEditingText { viewModel.commitText() }
-                    viewModel.currentTool = tool
-                } label: {
-                    Image(systemName: tool.iconName)
-                        .frame(width: 24, height: 24)
+        HStack(spacing: 12) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    glassGroup(spacing: 2) {
+                        ForEach(AnnotationTool.allCases) { tool in
+                            Button {
+                                if viewModel.isEditingText { viewModel.commitText() }
+                                viewModel.currentTool = tool
+                            } label: {
+                                Image(systemName: tool.iconName)
+                                    .font(.system(size: 14, weight: .semibold))
+                            }
+                            .buttonStyle(GlassToolbarButtonStyle(isSelected: viewModel.currentTool == tool))
+                            .help(tool.label)
+                        }
+                    }
+
+                    glassDivider
+
+                    glassGroup(spacing: 8) {
+                        if viewModel.currentTool == .mosaic {
+                            mosaicBlockSizeControl
+                        } else {
+                            ColorPicker("", selection: $viewModel.strokeColor)
+                                .labelsHidden()
+                                .frame(width: 28, height: 28)
+                                .help("注釈の色")
+
+                            if showsLineWidthControl {
+                                lineWidthControl
+                            }
+
+                            if viewModel.currentTool == .rectangle {
+                                rectStyleControl
+                            }
+                        }
+                    }
+
+                    glassDivider
+
+                    glassGroup(spacing: 2) {
+                        Button { viewModel.undo() } label: {
+                            Image(systemName: "arrow.uturn.backward")
+                        }
+                        .buttonStyle(GlassToolbarButtonStyle())
+                        .disabled(viewModel.history.isEmpty)
+                        .help("取り消し")
+                        .keyboardShortcut("z", modifiers: .command)
+
+                        Button { viewModel.clear() } label: {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(GlassToolbarButtonStyle(role: .destructive))
+                        .disabled(viewModel.annotations.isEmpty)
+                        .help("全消去")
+                    }
+
+                    if viewModel.currentTool == .crop {
+                        glassDivider
+
+                        glassGroup(spacing: 4) {
+                            Button { applyCrop() } label: {
+                                Image(systemName: "checkmark")
+                            }
+                            .buttonStyle(GlassToolbarButtonStyle(isSelected: viewModel.canApplyCrop))
+                            .disabled(!viewModel.canApplyCrop)
+                            .help("選択範囲で画像をクロップ")
+
+                            Button { viewModel.cancelCrop() } label: {
+                                Image(systemName: "xmark")
+                            }
+                            .buttonStyle(GlassToolbarButtonStyle())
+                            .disabled(viewModel.cropSelection == nil)
+                            .help("クロップ選択をキャンセル")
+                        }
+                    }
                 }
-                .buttonStyle(.bordered)
-                .tint(viewModel.currentTool == tool ? .accentColor : nil)
-                .help(tool.label)
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             }
 
-            Divider().frame(height: 20)
-
-            if viewModel.currentTool == .mosaic {
-                mosaicBlockSizeControl
-            } else {
-                ColorPicker("", selection: $viewModel.strokeColor)
-                    .labelsHidden()
-                    .frame(width: 30)
-
-                if showsLineWidthControl {
-                    lineWidthControl
+            glassGroup(spacing: 4) {
+                Button { copyToClipboard() } label: {
+                    Label("コピー", systemImage: "doc.on.doc")
                 }
+                .buttonStyle(GlassProminentButtonStyle())
+                .help("クリップボードにコピー")
+                .keyboardShortcut("c", modifiers: [.command, .shift])
 
-                if viewModel.currentTool == .rectangle {
-                    rectStyleControl
+                Button { saveToFile() } label: {
+                    Label("保存", systemImage: "square.and.arrow.down")
                 }
+                .buttonStyle(GlassProminentButtonStyle())
+                .help("ファイルに保存")
+                .keyboardShortcut("s", modifiers: .command)
             }
-
-            Divider().frame(height: 20)
-
-            Button { viewModel.undo() } label: {
-                Image(systemName: "arrow.uturn.backward")
-            }
-            .disabled(viewModel.history.isEmpty)
-            .help("取り消し")
-            .keyboardShortcut("z", modifiers: .command)
-
-            Button { viewModel.clear() } label: {
-                Image(systemName: "trash")
-            }
-            .disabled(viewModel.annotations.isEmpty)
-            .help("全消去")
-
-            if viewModel.currentTool == .crop {
-                Divider().frame(height: 20)
-
-                Button { applyCrop() } label: {
-                    Label("確定", systemImage: "checkmark")
-                }
-                .disabled(!viewModel.canApplyCrop)
-                .help("選択範囲で画像をクロップ")
-
-                Button { viewModel.cancelCrop() } label: {
-                    Image(systemName: "xmark")
-                }
-                .disabled(viewModel.cropSelection == nil)
-                .help("クロップ選択をキャンセル")
-            }
-
-            Spacer()
-
-            Button { copyToClipboard() } label: {
-                Label("コピー", systemImage: "doc.on.doc")
-            }
-            .help("クリップボードにコピー")
-            .keyboardShortcut("c", modifiers: [.command, .shift])
-
-            Button { saveToFile() } label: {
-                Label("保存", systemImage: "square.and.arrow.down")
-            }
-            .help("ファイルに保存")
-            .keyboardShortcut("s", modifiers: .command)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(.bar)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(.white.opacity(0.18))
+                        .frame(height: 1)
+                }
+        }
     }
 
     // MARK: - Canvas section
@@ -181,6 +209,7 @@ struct AnnotatedImageView: View {
     private var mosaicBlockSizeControl: some View {
         HStack(spacing: 6) {
             Image(systemName: "square.grid.3x3")
+                .foregroundStyle(.secondary)
                 .frame(width: 16, height: 16)
             Slider(value: $viewModel.mosaicBlockSize, in: 2...32, step: 1)
                 .frame(width: 110)
@@ -204,6 +233,7 @@ struct AnnotatedImageView: View {
     private var lineWidthControl: some View {
         HStack(spacing: 6) {
             Image(systemName: "lineweight")
+                .foregroundStyle(.secondary)
                 .frame(width: 16, height: 16)
             Slider(value: $viewModel.lineWidth, in: 1...16, step: 1)
                 .frame(width: 90)
@@ -229,7 +259,28 @@ struct AnnotatedImageView: View {
                 .frame(width: 24, height: 24)
         }
         .menuStyle(.button)
+        .buttonStyle(GlassToolbarButtonStyle())
         .help("矩形スタイル: \(viewModel.rectStyle.label)")
+    }
+
+    private var glassDivider: some View {
+        Capsule()
+            .fill(.primary.opacity(0.16))
+            .frame(width: 1, height: 26)
+            .padding(.horizontal, 1)
+    }
+
+    private func glassGroup<Content: View>(
+        spacing: CGFloat,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(spacing: spacing) {
+            content()
+        }
+        .padding(4)
+        .frame(height: 38)
+        .liquidGlass(in: Capsule())
+        .shadow(color: .black.opacity(0.12), radius: 12, x: 0, y: 5)
     }
 
     private func refreshPixelatedImages(for sourceImage: NSImage? = nil) {
@@ -296,9 +347,10 @@ struct AnnotatedImageView: View {
             .focused($isTextFieldFocused)
             .font(.system(size: viewModel.fontSize, weight: .bold))
             .foregroundStyle(viewModel.strokeColor)
-            .padding(4)
-            .background(Color.white.opacity(0.8))
-            .cornerRadius(4)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .liquidGlass(in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 4)
             .fixedSize()
             .offset(
                 x: viewModel.editingTextPosition.x,
@@ -391,5 +443,98 @@ struct AnnotatedImageView: View {
             canvasSize: canvasSize,
             parentWindow: NSApp.keyWindow
         )
+    }
+}
+
+private struct GlassToolbarButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    enum Role {
+        case standard
+        case destructive
+    }
+
+    var isSelected = false
+    var role: Role = .standard
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .labelStyle(.iconOnly)
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(foregroundColor)
+            .opacity(isEnabled ? 1 : 0.38)
+            .frame(width: 30, height: 30)
+            .background {
+                Capsule()
+                    .fill(backgroundStyle(isPressed: configuration.isPressed))
+            }
+            .overlay {
+                Capsule()
+                    .strokeBorder(borderColor, lineWidth: isSelected ? 1.2 : 0.8)
+            }
+            .shadow(
+                color: isSelected ? Color.accentColor.opacity(0.22) : .clear,
+                radius: 7,
+                x: 0,
+                y: 3
+            )
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(.easeInOut(duration: 0.16), value: isSelected)
+    }
+
+    private var foregroundColor: Color {
+        guard isEnabled else { return .secondary }
+
+        if role == .destructive {
+            return isSelected ? .white : .red
+        }
+        return isSelected ? .white : .primary
+    }
+
+    private var borderColor: Color {
+        isSelected ? .white.opacity(0.42) : .white.opacity(0.16)
+    }
+
+    private func backgroundStyle(isPressed: Bool) -> AnyShapeStyle {
+        if isSelected {
+            return AnyShapeStyle(Color.accentColor.opacity(isPressed ? 0.92 : 0.78))
+        }
+
+        if isPressed {
+            return AnyShapeStyle(Color.primary.opacity(0.14))
+        }
+
+        return AnyShapeStyle(Color.white.opacity(0.001))
+    }
+}
+
+private struct GlassProminentButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.primary)
+            .opacity(isEnabled ? 1 : 0.4)
+            .padding(.horizontal, 10)
+            .frame(height: 30)
+            .background {
+                Capsule()
+                    .fill(Color.white.opacity(configuration.isPressed ? 0.14 : 0.07))
+            }
+            .overlay {
+                Capsule()
+                    .strokeBorder(.white.opacity(0.2), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.08), radius: 7, x: 0, y: 3)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+private extension View {
+    func liquidGlass<S: InsettableShape>(in shape: S) -> some View {
+        glassEffect(.regular, in: shape)
     }
 }

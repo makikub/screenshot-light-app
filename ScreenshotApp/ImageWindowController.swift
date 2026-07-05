@@ -5,7 +5,7 @@ final class ImageWindowController: NSWindowController, NSWindowDelegate {
     var onClose: (() -> Void)?
 
     convenience init(image: NSImage) {
-        let toolbarHeight: CGFloat = 44
+        let toolbarHeight: CGFloat = 58
         let imageSize = Self.calcImageSize(for: image)
         let windowSize = NSSize(width: imageSize.width, height: imageSize.height + toolbarHeight)
 

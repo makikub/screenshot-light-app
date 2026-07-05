@@ -60,6 +60,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var onboardingController: OnboardingWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["SCREENSHOTAPP_OPEN_SAMPLE_EDITOR"] == "1" {
+            screenshotManager.showDebugSampleEditor()
+            hotKeyManager.register { [weak self] in
+                self?.captureOrShowOnboarding()
+            }
+            return
+        }
+        #endif
+
         if !permission.isGranted {
             showOnboarding()
         }

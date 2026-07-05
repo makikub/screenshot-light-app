@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "ScreenshotApp",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS("26.0")],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
     ],

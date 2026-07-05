@@ -139,7 +139,7 @@ MenuBarExtra (ScreenshotApp.swift)
 
 ## Key Constraints
 
-- **macOS 14.0+** ターゲット（Swift 5.9 language mode）
+- **macOS 26.0+** ターゲット（Liquid Glass 対応OS）
 - **Swift 6 コンパイラ**（strict concurrency 有効）— `@MainActor` が必要な箇所あり（例: `ExportManager`）
 - **App Sandbox 無効** — `screencapture` コマンド実行のため
 - **LSUIElement = true** — Dock 非表示のメニューバー専用アプリ

@@ -104,53 +104,74 @@ private struct ThumbnailContentView: View {
 
     var body: some View {
         ZStack {
-            // 背景（暗い画像でも視認できるように）
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(.windowBackgroundColor))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.white.opacity(0.001))
                 .frame(width: 200, height: 200)
-                .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                .liquidGlass(in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .shadow(color: .black.opacity(0.24), radius: 18, x: 0, y: 10)
 
             // 画像を正方形内に fit 表示
             Image(nsImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 200, height: 200)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
             if isHovering {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(.black.opacity(0.3))
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(.black.opacity(0.22))
                     .frame(width: 200, height: 200)
+                    .transition(.opacity)
 
                 VStack {
                     HStack {
                         Spacer()
                         Button(action: onClose) {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 20))
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .black.opacity(0.5))
+                                .font(.system(size: 21, weight: .semibold))
+                                .symbolRenderingMode(.hierarchical)
                         }
-                        .buttonStyle(.plain)
-                        .padding(6)
+                        .buttonStyle(ThumbnailGlassCloseButtonStyle())
+                        .padding(8)
                     }
                     Spacer()
                 }
                 .frame(width: 200, height: 200)
 
                 Text("クリックして編集")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.5), radius: 2)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .liquidGlass(in: Capsule())
+                    .shadow(color: .black.opacity(0.35), radius: 8, x: 0, y: 3)
             }
         }
         .padding(12)
-        .contentShape(RoundedRectangle(cornerRadius: 8))
+        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .onTapGesture { onOpen() }
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isHovering = hovering
             }
         }
+    }
+}
+
+private struct ThumbnailGlassCloseButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.white)
+            .frame(width: 30, height: 30)
+            .liquidGlass(in: Circle())
+            .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 3)
+            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+private extension View {
+    func liquidGlass<S: InsettableShape>(in shape: S) -> some View {
+        glassEffect(.regular, in: shape)
     }
 }
